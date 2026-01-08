@@ -1,78 +1,62 @@
-# dotslash-files
+dotslash-files
 
-Personal repository for "dotslash" configuration files, scripts, and per-project config used across my projects.
+This repository stores DOTSLASH wrapper files used across projects. A DOTSLASH file (commonly given a .ds extension) is a small script-like file that must begin with the shebang:
 
-Purpose
-- Centralize dotfiles, reusable scripts, templates, and per-project configuration.
-- Make bootstrapping and sharing configuration across machines and projects easy and reproducible.
+#!/usr/bin/env dotslash
 
-Recommended layout
-- `home/` — files intended to be symlinked into $HOME (e.g. `.zshrc`, `.gitconfig`, `.config/`)
-- `hosts/<hostname>/` — host-specific overrides and additions
-- `projects/<project>/` — per-project configs, tooling snippets, and README for usage
-- `bin/` — small executable helper scripts (add to PATH via symlink)
-- `templates/` — config templates (eg. `.gitconfig.local.template`)
-- `docs/` — additional documentation and notes
-- `private/` — local-only secrets (should be gitignored; do not commit secrets)
+and contain a JSON body that tells the dotslash runtime how to fetch and run the executable it represents. Any arguments passed on the dotslash command line after the DOTSLASH file are forwarded to the underlying executable.
 
-Getting started (examples)
+Quick usage
 
-Clone the repo:
+- Run a DOTSLASH file:
+  dotslash ./tool.ds -- <args>
 
-```bash
-git clone git@github.com:<you>/dotslash-files.git ~/.dotslash
-```
+- Validate / inspect a DOTSLASH file:
+  dotslash --parse ./tool.ds
 
-Apply your preferred management method (choose one):
+- Prepare (fetch) the executable without running it:
+  dotslash --fetch ./tool.ds
 
-- yadm (simple dotfile management):
+- Compute checksums:
+  dotslash --sha256 FILE
+  dotslash --b3sum FILE
 
-```bash
-yadm clone git@github.com:<you>/dotslash-files.git
-```
+Example DOTSLASH file (illustrative)
 
-- chezmoi (state-driven dotfile manager):
+#!/usr/bin/env dotslash
+{
+  "name": "mytool",
+  "provider": { "http": "https://example.com/bin/mytool-<platform>.tar.gz" },
+  "run": { "cmd": ["mytool"] }
+}
 
-```bash
-chezmoi init --apply git@github.com:<you>/dotslash-files.git
-```
+Testing & validation
 
-- GNU stow (symlink manager):
+- Make the file executable:
+  chmod +x ./tool.ds
 
-```bash
-cd ~/.dotslash
-stow home
-```
+- Validate JSON syntax (optional):
+  jq . ./tool.ds
 
-- Manual (one-off symlink):
+- Use dotslash --parse and dotslash --fetch to verify behaviour on your host.
 
-```bash
-ln -s ~/.dotslash/home/.zshrc ~/.zshrc
-```
+Best practices
 
-Per-project usage
-- Add this repo as a git submodule inside a project:
+- Use the #!/usr/bin/env dotslash shebang and prefer a .ds extension for clarity.
+- Avoid hardcoding platform-specific paths; use provider templates and runtime outputs instead (see --help for supported placeholders).
+- Pin artifacts with checksums when possible and prefer stable, versioned downloads.
 
-```bash
-git submodule add git@github.com:<you>/dotslash-files.git .dots
-```
+Repository organization
 
-- Keep per-project config in `projects/<project>/` and add a small setup script in the project to link or copy those files as needed.
+Store DOTSLASH files in a logical location (root, a tools/ directory, or a dedicated dots/ directory). Keep files small, well-documented, and executable.
 
-Security and secrets
-- Do NOT commit secrets (API keys, private keys, passwords).
-- Use `.gitignore` to keep local-only files out of version control.
-- For encrypted secrets consider tools like `git-crypt` or `sops`.
+References
+
+- Local quick reference: /Users/rmax/docs/dotslash.md
+- Official project: https://dotslash-cli.com
 
 Contributing
-- This is primarily a personal repository; for collaborative/public workflows, open an issue first, then a branch and PR.
-- Keep changes focused and document why a change is needed.
 
-License
-- No license is specified in this repository by default. Add a `LICENSE` file if you want to make contents explicitly reusable under an open license.
-
-Maintainer
-- rmax
-
-Notes
-- If you want, I can add a `bootstrap` script, example configs, or a CONTRIBUTING guide.
+1. Add your DOTSLASH file (make it executable).
+2. Validate locally with dotslash --parse and dotslash --fetch.
+3. Open a PR describing the tool, platforms supported (if any), and any checksums or verification steps.
