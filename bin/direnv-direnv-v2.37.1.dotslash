@@ -1,0 +1,48 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=direnv/direnv TAG=v2.37.1",
+  "name": "direnv",
+  "platforms": {
+    "macos-x86_64": {
+      "size": 8350032,
+      "hash": "sha256",
+      "digest": "24fb9ce48b563d7e9fbdd3a4e3e836941654a31ce3e67eba9eaafc3dcd8ae73b",
+      "path": "direnv",
+      "providers": [
+        { "url": "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.darwin-amd64" },
+        { "type": "github-release", "repo": "direnv/direnv", "tag": "v2.37.1", "name": "direnv.darwin-amd64" }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 7899154,
+      "hash": "sha256",
+      "digest": "4f569f3a36732bfd8b8fea7bfcc6ad87a59745c109022164d0ca4832451d5369",
+      "path": "direnv",
+      "providers": [
+        { "url": "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.darwin-arm64" },
+        { "type": "github-release", "repo": "direnv/direnv", "tag": "v2.37.1", "name": "direnv.darwin-arm64" }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 8151224,
+      "hash": "sha256",
+      "digest": "1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5",
+      "path": "direnv",
+      "providers": [
+        { "url": "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.linux-amd64" },
+        { "type": "github-release", "repo": "direnv/direnv", "tag": "v2.37.1", "name": "direnv.linux-amd64" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 7667896,
+      "hash": "sha256",
+      "digest": "2a9cef8d73521d6a3ec3f2871c4b747b8c4cc038628c1b57a7efa42b393a2d82",
+      "path": "direnv",
+      "providers": [
+        { "url": "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.linux-arm64" },
+        { "type": "github-release", "repo": "direnv/direnv", "tag": "v2.37.1", "name": "direnv.linux-arm64" }
+      ]
+    }
+  }
+}
