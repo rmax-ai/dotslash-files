@@ -32,8 +32,14 @@ Environment variables (optional):
   SANDBOX_OFFLINE         - if set (non-empty), run container with networking disabled (e.g., SANDBOX_OFFLINE=1)
   SANDBOX_ENV             - space-separated list of environment variable names to pass through into the container (e.g., SANDBOX_ENV='HTTP_PROXY HTTPS_PROXY')
   SANDBOX_OUTPUT          - host directory path to mount as /output inside the container (read-write)
+  SANDBOX_ALLOW_EMULATION - set to 1 to allow running a different platform (emulated) when SANDBOX_PLATFORM is set
   PODMAN_BIN              - path to the podman executable to use (default: podman)
   SANDBOX_IMAGE           - container image to run (default: fedora:latest)
+  SANDBOX_CACHE_DIR       - override base cache dir (default: $HOME/.cache/dotslash-sandbox)
+
+Notes:
+  - The cache is split per platform (e.g., $HOME/.cache/dotslash-sandbox/linux-amd64) to avoid cross-platform
+    cache corruption when images or rewrites differ between architectures.
 EOF
 )
 
@@ -68,8 +74,8 @@ SANDBOX_PLATFORM="${SANDBOX_PLATFORM:-}"
 # Normalize host platform (linux/amd64, linux/arm64)
 HOST_UNAME="$(uname -m)"
 case "$HOST_UNAME" in
-    x86_64|amd64) HOST_PLATFORM="linux/amd64" ;; 
-    aarch64|arm64) HOST_PLATFORM="linux/arm64" ;; 
+    x86_64|amd64) HOST_PLATFORM="linux/amd64" ;;
+    aarch64|arm64) HOST_PLATFORM="linux/arm64" ;;
     *) HOST_PLATFORM="linux/$(echo "$HOST_UNAME" | tr A-Z a-z)" ;;
 esac
 
@@ -99,12 +105,26 @@ FILE_NAME=$(basename "$ABS_FILE_PATH")
 
 # Container paths
 WORK_DIR="/work"
-HOST_CACHE="${SANDBOX_CACHE_DIR:-$HOME/.cache/dotslash-sandbox}"
-HOST_BIN_CACHE="$HOST_CACHE/bin"
+# Base cache dir (platform-specific suffix added below)
+HOST_CACHE_BASE="${SANDBOX_CACHE_DIR:-$HOME/.cache/dotslash-sandbox}"
 CONTAINER_CACHE="/tmp/dotslash-cache"
 CONTAINER_HOME="/home/$(whoami)"
 CONTAINER_BIN="$CONTAINER_HOME/.local/bin"
 SHIM_PATH="$(realpath "$(dirname "$0")/dotslash-shim")"
+
+# Determine the effective platform (use host platform by default unless
+# SANDBOX_PLATFORM was accepted above -- see logic above). This must happen
+# before we create the platform-specific cache directory.
+if [[ -n "$SANDBOX_PLATFORM" ]]; then
+    EFFECTIVE_PLATFORM="$SANDBOX_PLATFORM"
+else
+    EFFECTIVE_PLATFORM="$HOST_PLATFORM"
+fi
+
+# Use a platform-specific cache directory to avoid cross-platform issues
+PLATFORM_TAG="${EFFECTIVE_PLATFORM//\//-}"
+HOST_CACHE="$HOST_CACHE_BASE/$PLATFORM_TAG"
+HOST_BIN_CACHE="$HOST_CACHE/bin"
 
 mkdir -p "$HOST_BIN_CACHE"
 
