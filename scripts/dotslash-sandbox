@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# dotslash-sandbox: Run a .dotslash file in a Podman container.
+#
+# This script sets up a secure, isolated environment using Podman to execute
+# the specified .dotslash file. Behaviour notes for developers:
+# - The current working directory is mounted read-only into the container to
+#   avoid accidental host modifications while allowing tools to run against
+#   repository files.
+# - A per-user cache is exposed at $HOME/.cache/dotslash-sandbox and mounted
+#   into the container as a temporary download cache to speed repeated fetches.
+# - A small `dotslash` shim is injected into the container to allow fetching
+#   and verifying artifacts inside the sandbox.
+# - The container is run with reduced privileges, limited resources, and a
+#   minimal writable surface; when extending behaviour, keep mounts and env
+#   variables opt-in and documented to preserve isolation and reproducibility.
+#
+# Keep the help text and usage examples in the top-of-file HELP block below.
+
+HELP=$(cat <<'EOF'
+Dotslash Sandbox - Run a .dotslash file in a Podman container.
+
+Usage:
+  ./dotslash-sandbox <file.dotslash> [args...]
+
+Example:
+  SANDBOX_OFFLINE=1 ./dotslash-sandbox tool.dotslash -- arg1 arg2
+
+Environment variables (optional):
+  SANDBOX_ADDITIONAL_PATH - host path to bind as an extra bin directory inside the container (read-only)
+  SANDBOX_OFFLINE         - if set (non-empty), run container with networking disabled (e.g., SANDBOX_OFFLINE=1)
+  SANDBOX_ENV             - space-separated list of environment variable names to pass through into the container (e.g., SANDBOX_ENV='HTTP_PROXY HTTPS_PROXY')
+  SANDBOX_OUTPUT          - host directory path to mount as /output inside the container (read-write)
+  PODMAN_BIN              - path to the podman executable to use (default: podman)
+  SANDBOX_IMAGE           - container image to run (default: fedora:latest)
+EOF
+)
+
+# Print help if requested
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "$HELP" >&2
+    exit 0
+fi
+
+if [[ $# -lt 1 ]]; then
+    echo "$HELP" >&2
+    exit 1
+fi
+
+DOTSLASH_FILE="$1"
+SANDBOX_ADDITIONAL_PATH="${SANDBOX_ADDITIONAL_PATH:-}"
+SANDBOX_OFFLINE="${SANDBOX_OFFLINE:-}"
+SANDBOX_ENV="${SANDBOX_ENV:-}"
+SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-}"
+PODMAN_BIN="${PODMAN_BIN:-podman}"
+shift 1
+
+# Resolve absolute path of the dotslash file and its directory
+ABS_FILE_PATH=$(realpath "$DOTSLASH_FILE")
+FILE_DIR=$(dirname "$ABS_FILE_PATH")
+FILE_NAME=$(basename "$ABS_FILE_PATH")
+
+# Container paths
+WORK_DIR="/work"
+HOST_CACHE="${SANDBOX_CACHE_DIR:-$HOME/.cache/dotslash-sandbox}"
+HOST_BIN_CACHE="$HOST_CACHE/bin"
+CONTAINER_CACHE="/tmp/dotslash-cache"
+CONTAINER_HOME="/home/$(whoami)"
+CONTAINER_BIN="$CONTAINER_HOME/.local/bin"
+SHIM_PATH="$(realpath "$(dirname "$0")/dotslash-shim")"
+
+mkdir -p "$HOST_BIN_CACHE"
+
+# Base container command
+PODMAN_ARGS=(
+    run --rm -it
+    --userns=keep-id
+    --security-opt=no-new-privileges
+    --cap-drop=all
+    --read-only
+    --tmpfs /tmp
+    --tmpfs /home
+    --memory=1g
+    --cpus=1.0
+    --pids-limit=128
+    -v "$PWD:$WORK_DIR:ro"
+    -v "$ABS_FILE_PATH:/target/$FILE_NAME:ro"
+    -v "$SHIM_PATH:/usr/local/bin/dotslash:ro"
+    -v "$HOST_CACHE:$CONTAINER_CACHE"
+    -v "$HOST_BIN_CACHE:$CONTAINER_BIN"
+    -e "DOTSLASH_CACHE=$CONTAINER_CACHE"
+    -e "USER=$(whoami)"
+    -e "HOME=$CONTAINER_HOME"
+    -e "TERM=${TERM:-xterm-256color}"
+    -w "$WORK_DIR"
+)
+
+# Handle offline mode
+if [[ -n "$SANDBOX_OFFLINE" ]]; then
+    PODMAN_ARGS+=( --network none )
+fi
+
+# Handle environment passthrough
+for var in $SANDBOX_ENV; do
+    PODMAN_ARGS+=( -e "$var" )
+done
+
+# Handle output mount
+if [[ -n "$SANDBOX_OUTPUT" ]]; then
+    ABS_OUTPUT=$(realpath "$SANDBOX_OUTPUT")
+    mkdir -p "$ABS_OUTPUT"
+    PODMAN_ARGS+=( -v "$ABS_OUTPUT:/output:rw" )
+fi
+
+# Handle optional bin directory
+ENV_PATH="$CONTAINER_BIN:$WORK_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [[ -n "$SANDBOX_ADDITIONAL_PATH" ]]; then
+    ABS_ADDITIONAL_PATH=$(realpath "$SANDBOX_ADDITIONAL_PATH")
+    CONTAINER_ADDITIONAL_PATH="/extra_bin"
+    PODMAN_ARGS+=( -v "$ABS_ADDITIONAL_PATH:$CONTAINER_ADDITIONAL_PATH:ro" )
+    ENV_PATH="$CONTAINER_ADDITIONAL_PATH:$ENV_PATH"
+fi
+
+if [[ -n "$SANDBOX_OUTPUT" ]]; then
+    ENV_PATH="/output:$ENV_PATH"
+fi
+
+# Run the container
+# We use fedora as it typically includes curl and tar by default,
+# unlike debian-slim, while being very compatible with DotSlash.
+SANDBOX_IMAGE="${SANDBOX_IMAGE:-fedora:latest}"
+
+"$PODMAN_BIN" "${PODMAN_ARGS[@]}" \
+    --env "PATH=$ENV_PATH" \
+    "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"

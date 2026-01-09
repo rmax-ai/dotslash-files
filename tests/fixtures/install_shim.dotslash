@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Invoke the `dotslash` command which should get installed by the shim
+# when no existing binary is present.
+dotslash --from-install "$@"

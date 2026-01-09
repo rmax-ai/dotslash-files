@@ -76,6 +76,16 @@ jq . ./tool.dotslash
 
 Store DotSlash files in a logical location (root, a `tools/` directory, or a dedicated `dots/` directory). Keep files small, well-documented, and executable.
 
+## Included scripts
+
+- `scripts/dotslash-sandbox`
+  - Run a .dotslash file in a Podman container for hermetic, reproducible execution.
+	- Usage: ./scripts/dotslash-sandbox <file.dotslash> [args...]
+- `scripts/dotslash-shim`
+  - Lightweight shim that ensures a pinned `dotslash` binary is available in `$HOME/.cache/dotslash-shim/bin/dotslash`; downloads and verifies v0.5.8 if missing.
+  - Usage: Invoke directly (`./scripts/dotslash-shim`) or let `dotslash-sandbox` mount it into containers.
+  - Use cases: Run `dotslash` on systems without a global install (CI, containers), provide an isolated, verifiable runtime for DotSlash files.
+
 ## References
 
 - Official project: [dotslash-cli.com](https://dotslash-cli.com)

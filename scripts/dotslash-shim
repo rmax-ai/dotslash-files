@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This is a shim for DotSlash (https://github.com/facebook/dotslash).
+# DotSlash is a command-line tool designed to facilitate fetching an executable,
+# verifying it, and then running it. It maintains a local cache of fetched
+# executables so that subsequent invocations are fast.
+#
+# This shim ensures the DotSlash binary itself is present in $HOME/.cache/dotslash-shim/bin/dotslash,
+# automatically downloading version v0.5.8 for the current platform
+# if it is missing, before forwarding all arguments to it.
+#
+# Rationale: we use a cache directory under $HOME/.cache/dotslash-shim to keep the binary
+# isolated from the user's PATH and to avoid modifying $HOME/.local/bin; this makes the
+# installation ephemeral, predictable, and suitable for single-file shims.
+#
+# Usage: ./scripts/dotslash-shim [args...]
+#
+# Environment variables:
+# DOTSLASH_CACHE_DIR  - path to cache directory for the dotslash binary (default: $HOME/.cache/dotslash-shim)
+# DOTSLASH_VERSION    - pinned dotslash version to download (default: v0.5.8)
+# DOTSLASH_BIN        - override full path to the dotslash binary (default: $HOME/.cache/dotslash-shim/bin/dotslash)
+# DOTSLASH_HASH_<OS>_<ARCH> - optional per-platform override, e.g. DOTSLASH_HASH_DARWIN_AMD64
+# DOTSLASH_SKIP_VERIFY         - if set (non-empty), skip checksum verification (use with caution; useful for testing/offline)
+
+# The default values for environment variables
+DOTSLASH_CACHE_DIR="${DOTSLASH_CACHE_DIR:-$HOME/.cache/dotslash-shim}"
+DOTSLASH_VERSION="${DOTSLASH_VERSION:-v0.5.8}"
+DOTSLASH_BIN="${DOTSLASH_BIN:-$DOTSLASH_CACHE_DIR/bin/dotslash}"
+DOTSLASH_SKIP_VERIFY="${DOTSLASH_SKIP_VERIFY:-}"
+
+# Default checksums for supported platforms
+DARWIN_AMD64_HASH="fbec3945710caf708f2a6820d9b83408d29ca4123cf05b3b44dc6fc4e21673fa"
+DARWIN_ARM64_HASH="0e6d4ef805b2cb78ee6a389bcc5b67be35d25569373a8336cefa396a9625b417"
+
+LINUX_X86_64_HASH="39d1b0bde961cf0cd3127e9ad685b68746efc7463d42a5f7a4d4304152b4619c"
+LINUX_ARM64_HASH="97e3bb94c57f96847ee666d0ccc9f03cbf7a42919823f677d82691c74d12d7dc"
+
+# If dotslash is already installed and executable, just run it
+if [[ -x "$DOTSLASH_BIN" ]]; then
+    exec "$DOTSLASH_BIN" "$@"
+fi
+
+# Else, install dotslash and then run it
+echo "[dotslash-shim] Installing dotslash..." >&2
+mkdir -p "$(dirname "$DOTSLASH_BIN")"
+
+VERSION="$DOTSLASH_VERSION"
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+    Darwin)
+        # macOS assets use amd64 for x86_64 in the versioned filenames
+        [[ "$ARCH" == "x86_64" ]] && ARCH="amd64"
+        URL="https://github.com/facebook/dotslash/releases/download/$VERSION/dotslash-macos-$ARCH.$VERSION.tar.gz"
+        case "$ARCH" in
+            amd64) EXPECTED_HASH="${DOTSLASH_HASH_DARWIN_AMD64:-$DARWIN_AMD64_HASH}" ;;
+            arm64) EXPECTED_HASH="${DOTSLASH_HASH_DARWIN_ARM64:-$DARWIN_ARM64_HASH}" ;;
+        esac
+        ;;
+    Linux)
+        # Ubuntu assets use arm64 for aarch64
+        [[ "$ARCH" == "aarch64" ]] && ARCH="arm64"
+        URL="https://github.com/facebook/dotslash/releases/download/$VERSION/dotslash-ubuntu-22.04.$ARCH.$VERSION.tar.gz"
+        case "$ARCH" in
+            x86_64) EXPECTED_HASH="${DOTSLASH_HASH_LINUX_X86_64:-$LINUX_X86_64_HASH}" ;;
+            arm64)  EXPECTED_HASH="${DOTSLASH_HASH_LINUX_ARM64:-$LINUX_ARM64_HASH}" ;;
+        esac
+        ;;
+    *)
+        echo "Unsupported OS: $OS" >&2
+        exit 1
+        ;;
+esac
+
+TMP_ARCHIVE=$(mktemp)
+trap 'rm -f "$TMP_ARCHIVE"' EXIT
+curl -LSfs "$URL" -o "$TMP_ARCHIVE"
+
+if [[ -n "${DOTSLASH_SKIP_VERIFY:-}" ]]; then
+    echo "[dotslash-shim] Skipping checksum verification (DOTSLASH_SKIP_VERIFY set)" >&2
+else
+    if command -v sha256sum >/dev/null 2>&1; then
+        echo "$EXPECTED_HASH  $TMP_ARCHIVE" | sha256sum -c - >/dev/null
+    else
+        echo "$EXPECTED_HASH  $TMP_ARCHIVE" | shasum -a 256 -c - >/dev/null
+    fi
+fi
+
+tar fxz "$TMP_ARCHIVE" -C "$(dirname "$DOTSLASH_BIN")"
+chmod +x "$DOTSLASH_BIN"
+
+# Ensure runtime dependencies are checked inside the sandbox
+if [[ ! -x $(command -v curl) ]]; then
+    echo "Warning: curl is missing in the container. Dotslash downloads may fail." >&2
+fi
+
+exec "$DOTSLASH_BIN" "$@"

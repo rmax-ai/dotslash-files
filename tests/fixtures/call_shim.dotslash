@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Invoke the `dotslash` command in the container (this resolves to the shim)
+dotslash --from-tests "$@"
