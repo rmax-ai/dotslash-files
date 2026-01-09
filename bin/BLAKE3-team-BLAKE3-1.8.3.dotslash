@@ -1,0 +1,59 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=BLAKE3-team/BLAKE3 TAG=1.8.3",
+  "name": "b3sum",
+  "platforms": {
+    "macos-x86_64": {
+      "size": 1333456,
+      "hash": "sha256",
+      "digest": "2d854a8c1779b6dd78b02f1057c0009be1449ec393fa2c5145ad2afa99fb5b55",
+      "path": "b3sum",
+      "providers": [
+        {
+          "url": "https://github.com/BLAKE3-team/BLAKE3/releases/download/1.8.3/b3sum_macos_x64_bin"
+        },
+        {
+          "type": "github-release",
+          "repo": "BLAKE3-team/BLAKE3",
+          "tag": "1.8.3",
+          "name": "b3sum_macos_x64_bin"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 1333456,
+      "hash": "sha256",
+      "digest": "2d854a8c1779b6dd78b02f1057c0009be1449ec393fa2c5145ad2afa99fb5b55",
+      "path": "b3sum",
+      "providers": [
+        {
+          "url": "https://github.com/BLAKE3-team/BLAKE3/releases/download/1.8.3/b3sum_macos_x64_bin"
+        },
+        {
+          "type": "github-release",
+          "repo": "BLAKE3-team/BLAKE3",
+          "tag": "1.8.3",
+          "name": "b3sum_macos_x64_bin"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 1572592,
+      "hash": "sha256",
+      "digest": "71ecabda828a47f0566c03a8a42e3fa5acdb08f17da0dc06a26e6a3470c9d10e",
+      "path": "b3sum",
+      "providers": [
+        {
+          "url": "https://github.com/BLAKE3-team/BLAKE3/releases/download/1.8.3/b3sum_linux_x64_bin"
+        },
+        {
+          "type": "github-release",
+          "repo": "BLAKE3-team/BLAKE3",
+          "tag": "1.8.3",
+          "name": "b3sum_linux_x64_bin"
+        }
+      ]
+    }
+  }
+}
