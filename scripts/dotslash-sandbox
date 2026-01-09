@@ -58,17 +58,12 @@ shift 1
 
 # Platform selection:
 # - If SANDBOX_PLATFORM is explicitly set, use it.
-# - If unset and the host is ARM (aarch64/arm64), default to x86_64 emulation (linux/amd64)
-#   to run binaries in the linux/amd64 architecture by default on ARM hosts.
+# - If unset, we default to the host platform (no --platform arg passed to podman).
+#   This keeps default behavior compatible with host and CI unless a platform is
+#   intentionally forced (for example via TEST_SANDBOX_PLATFORM in the Makefile).
 SANDBOX_PLATFORM="${SANDBOX_PLATFORM:-}"
-HOST_ARCH="$(uname -m)"
-if [[ -z "$SANDBOX_PLATFORM" ]]; then
-    if [[ "$HOST_ARCH" == "arm64" || "$HOST_ARCH" == "aarch64" ]]; then
-        SANDBOX_PLATFORM="linux/amd64"
-    fi
-fi
 
-# If a platform is selected, inform the user
+# If a platform is explicitly set, inform the user
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
     echo "Using platform: $SANDBOX_PLATFORM"
 fi
