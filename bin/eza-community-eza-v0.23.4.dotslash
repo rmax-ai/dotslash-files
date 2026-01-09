@@ -1,0 +1,44 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=eza-community/eza TAG=v0.23.4",
+  "name": "eza",
+  "platforms": {
+    "linux-aarch64": {
+      "size": 964411,
+      "hash": "sha256",
+      "digest": "366e8430225f9955c3dc659b452150c169894833ccfef455e01765e265a3edda",
+      "format": "tar.gz",
+      "path": "eza",
+      "providers": [
+        {
+          "url": "https://github.com/eza-community/eza/releases/download/v0.23.4/eza_aarch64-unknown-linux-gnu.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "eza-community/eza",
+          "tag": "v0.23.4",
+          "name": "eza_aarch64-unknown-linux-gnu.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 1050865,
+      "hash": "sha256",
+      "digest": "0c38665440226cd8bef5d1d4f3bc6ff77c927fb0d68b752739105db7ab5b358d",
+      "format": "tar.gz",
+      "path": "eza",
+      "providers": [
+        {
+          "url": "https://github.com/eza-community/eza/releases/download/v0.23.4/eza_x86_64-unknown-linux-gnu.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "eza-community/eza",
+          "tag": "v0.23.4",
+          "name": "eza_x86_64-unknown-linux-gnu.tar.gz"
+        }
+      ]
+    }
+  }
+}
