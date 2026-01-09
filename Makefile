@@ -24,13 +24,23 @@ check-deps:
 # Pattern rule: each .test depends on the corresponding .dotslash file
 # and runs dotslash-sandbox with --version to validate the manifest and binary.
 # If `podman` is not available, the sandbox tests are skipped for each file.
+# We capture the sandbox output (stdout+stderr) to avoid progress bars or carriage
+# return artifacts from polluting the surrounding output and to enable clear
+# success/failure messaging.
 %.test: %.dotslash
 	@echo "Running sandbox test for $<"
 	@if ! command -v podman >/dev/null 2>&1; then \
 		echo "Warning: podman not found; skipping sandbox test for $<"; \
 	else \
-		./scripts/dotslash-sandbox "$<" --version >/dev/null; \
-		echo "✓ $< passed"; \
+		OUTPUT="$$(./scripts/dotslash-sandbox "$<" --version 2>&1)"; \
+		STATUS=$$?; \
+		if [ $$STATUS -eq 0 ]; then \
+			echo "✓ $< passed"; \
+		else \
+			echo "✗ $< failed"; \
+			echo "$$OUTPUT"; \
+			exit $$STATUS; \
+		fi; \
 	fi
 
 # Clean up .test stamp files (if any were created as side-effects)
