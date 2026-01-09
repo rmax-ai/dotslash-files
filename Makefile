@@ -12,8 +12,12 @@ TEST_SANDBOX_PLATFORM ?= linux/amd64
 .PHONY: test shim-tests check-deps clean
 
 # Default test target
-test: shim-tests $(TEST_TARGETS)
+test: shim-tests bin-tests
 	@echo "All tests completed."
+
+# Run bin sandbox tests
+bin-tests: $(TEST_TARGETS)
+	@echo "All bin sandbox tests completed."
 
 # Run the existing shim tests
 shim-tests:
