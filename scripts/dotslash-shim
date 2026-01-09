@@ -22,12 +22,14 @@ set -euo pipefail
 # DOTSLASH_BIN        - override full path to the dotslash binary (default: $HOME/.cache/dotslash-shim/bin/dotslash)
 # DOTSLASH_HASH_<OS>_<ARCH> - optional per-platform override, e.g. DOTSLASH_HASH_DARWIN_AMD64
 # DOTSLASH_SKIP_VERIFY         - if set (non-empty), skip checksum verification (use with caution; useful for testing/offline)
+# DOTSLASH_VERBOSE             - if set to '1', print status messages (default: off)
 
 # The default values for environment variables
 DOTSLASH_CACHE_DIR="${DOTSLASH_CACHE_DIR:-$HOME/.cache/dotslash-shim}"
 DOTSLASH_VERSION="${DOTSLASH_VERSION:-v0.5.8}"
 DOTSLASH_BIN="${DOTSLASH_BIN:-$DOTSLASH_CACHE_DIR/bin/dotslash}"
 DOTSLASH_SKIP_VERIFY="${DOTSLASH_SKIP_VERIFY:-}"
+DOTSLASH_VERBOSE="${DOTSLASH_VERBOSE:-0}"
 
 # Default checksums for supported platforms
 DARWIN_AMD64_HASH="fbec3945710caf708f2a6820d9b83408d29ca4123cf05b3b44dc6fc4e21673fa"
@@ -46,7 +48,7 @@ VERSION="$DOTSLASH_VERSION"
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
-echo "[dotslash-shim] Installing dotslash ($VERSION) for $OS/$ARCH..." >&2
+[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "[dotslash-shim] Installing dotslash ($VERSION) for $OS/$ARCH..." >&2
 
 # Check for curl before attempting download
 if ! command -v curl >/dev/null 2>&1; then
@@ -83,13 +85,15 @@ esac
 
 TMP_ARCHIVE=$(mktemp)
 trap 'rm -f "$TMP_ARCHIVE"' EXIT
-echo "[dotslash-shim] Downloading from $URL ..." >&2
+[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "[dotslash-shim] Downloading from $URL ..." >&2
 # We use --progress-bar for better visibility since emulation can be slow.
 # --retry-connrefused and --retry 3 help with transient network issues.
-curl -Lf --progress-bar --connect-timeout 30 --retry 3 --retry-connrefused "$URL" -o "$TMP_ARCHIVE"
+CURL_PROGRESS=("--progress-bar")
+[[ "$DOTSLASH_VERBOSE" != "1" ]] && CURL_PROGRESS=("-s")
+curl -Lf "${CURL_PROGRESS[@]}" --connect-timeout 30 --retry 3 --retry-connrefused "$URL" -o "$TMP_ARCHIVE"
 
 if [[ -n "${DOTSLASH_SKIP_VERIFY:-}" ]]; then
-    echo "[dotslash-shim] Skipping checksum verification (DOTSLASH_SKIP_VERIFY set)" >&2
+    [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "[dotslash-shim] Skipping checksum verification (DOTSLASH_SKIP_VERIFY set)" >&2
 else
     if command -v sha256sum >/dev/null 2>&1; then
         echo "$EXPECTED_HASH  $TMP_ARCHIVE" | sha256sum -c - >/dev/null

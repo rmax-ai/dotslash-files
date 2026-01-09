@@ -36,6 +36,7 @@ Environment variables (optional):
   PODMAN_BIN              - path to the podman executable to use (default: podman)
   SANDBOX_IMAGE           - container image to run (default: fedora:latest)
   SANDBOX_CACHE_DIR       - override base cache dir (default: $HOME/.cache/dotslash-sandbox)
+  DOTSLASH_VERBOSE        - if set to '1', print status messages (default: off)
 
 Notes:
   - The cache is split per platform (e.g., $HOME/.cache/dotslash-sandbox/linux-amd64) to avoid cross-platform
@@ -60,6 +61,7 @@ SANDBOX_OFFLINE="${SANDBOX_OFFLINE:-}"
 SANDBOX_ENV="${SANDBOX_ENV:-}"
 SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-}"
 PODMAN_BIN="${PODMAN_BIN:-podman}"
+DOTSLASH_VERBOSE="${DOTSLASH_VERBOSE:-0}"
 shift 1
 
 # Platform selection:
@@ -84,16 +86,16 @@ esac
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
     if [[ "$SANDBOX_PLATFORM" != "$HOST_PLATFORM" ]]; then
         if [[ "${SANDBOX_ALLOW_EMULATION:-}" != "1" ]]; then
-            echo "Note: requested platform '$SANDBOX_PLATFORM' differs from host '$HOST_PLATFORM'." >&2
-            echo "Defaulting to host platform '$HOST_PLATFORM' to avoid emulation." >&2
-            echo "Set SANDBOX_ALLOW_EMULATION=1 to permit running '$SANDBOX_PLATFORM' via emulation." >&2
+            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Note: requested platform '$SANDBOX_PLATFORM' differs from host '$HOST_PLATFORM'." >&2
+            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Defaulting to host platform '$HOST_PLATFORM' to avoid emulation." >&2
+            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Set SANDBOX_ALLOW_EMULATION=1 to permit running '$SANDBOX_PLATFORM' via emulation." >&2
             # Unset SANDBOX_PLATFORM so we don't pass --platform to podman
             SANDBOX_PLATFORM=""
         else
-            echo "Using requested platform via emulation: $SANDBOX_PLATFORM" >&2
+            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using requested platform via emulation: $SANDBOX_PLATFORM" >&2
         fi
     else
-        echo "Using platform: $SANDBOX_PLATFORM"
+        [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using platform: $SANDBOX_PLATFORM"
     fi
 fi
 

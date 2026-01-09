@@ -26,6 +26,9 @@ trap 'rm -rf "$MOCK_DIR"' EXIT
 export SANDBOX_CACHE_DIR="$MOCK_DIR/cache"
 mkdir -p "$SANDBOX_CACHE_DIR"
 
+# Enable verbose output for tests that expect to parse it
+export DOTSLASH_VERBOSE=1
+
 echo "Starting dotslash-shim tests..."
 
 # 1. Test DOTSLASH_BIN: Directly run a provided binary without installation
@@ -52,31 +55,38 @@ fi
 # 2. Test installation trigger and DOTSLASH_CACHE_DIR
 echo "[Test 2] DOTSLASH_CACHE_DIR and installation"
 # Mock curl to "download" a fake tarball
-# dotslash-shim calls: curl -LSfs "$URL" -o "$TMP_ARCHIVE"
 cat > "$MOCK_DIR/curl" <<'EOF'
 #!/bin/sh
-# $2 is URL, $4 is output file
-echo "Mock curl downloading from $2"
+# Robustly find URL and output file in curl arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o) shift; OUTPUT_FILE="$1" ;;
+    http*) URL="$1" ;;
+  esac
+  shift
+done
+echo "Mock curl downloading from $URL"
 WORKDIR=$(mktemp -d)
 echo '#!/bin/sh' > "$WORKDIR/dotslash"
 echo 'echo "Mock binary executed"' >> "$WORKDIR/dotslash"
 chmod +x "$WORKDIR/dotslash"
-tar -czf "$4" -C "$WORKDIR" dotslash
+tar -czf "$OUTPUT_FILE" -C "$WORKDIR" dotslash
 EOF
 chmod +x "$MOCK_DIR/curl"
 
 # We also need to mock sha256sum/shasum if we don't skip verify,
 # but using DOTSLASH_SKIP_VERIFY is easier for this test.
 export SANDBOX_ADDITIONAL_PATH="$MOCK_DIR"
-export SANDBOX_ENV="DOTSLASH_CACHE_DIR DOTSLASH_SKIP_VERIFY"
+export SANDBOX_ENV="DOTSLASH_CACHE_DIR DOTSLASH_SKIP_VERIFY DOTSLASH_VERBOSE"
 export DOTSLASH_CACHE_DIR="/tmp/custom-cache"
 export DOTSLASH_SKIP_VERIFY="1"
+export DOTSLASH_VERBOSE="1"
 unset DOTSLASH_BIN # Ensure we don't use the previous test's BIN
 
 OUTPUT=$( "$SANDBOX" "$FIXTURE" 2>&1 ) || EXIT_CODE=$?
 echo "Exit code: ${EXIT_CODE:-0}"
 
-if [[ "$OUTPUT" == *"[dotslash-shim] Installing dotslash..."* ]] && [[ "$OUTPUT" == *"Mock binary executed"* ]]; then
+if [[ "$OUTPUT" == *"[dotslash-shim] Installing dotslash"* ]] && [[ "$OUTPUT" == *"Mock binary executed"* ]]; then
     echo "✓ DOTSLASH_CACHE_DIR and installation passed"
 else
     echo "✗ DOTSLASH_CACHE_DIR and installation failed"
@@ -88,8 +98,9 @@ fi
 echo "[Test 3] DOTSLASH_VERSION"
 export DOTSLASH_VERSION="v1.2.3-test"
 export DOTSLASH_CACHE_DIR="/tmp/test3-cache"
-export SANDBOX_ENV="DOTSLASH_VERSION DOTSLASH_SKIP_VERIFY DOTSLASH_CACHE_DIR"
+export SANDBOX_ENV="DOTSLASH_VERSION DOTSLASH_SKIP_VERIFY DOTSLASH_CACHE_DIR DOTSLASH_VERBOSE"
 export DOTSLASH_SKIP_VERIFY="1"
+export DOTSLASH_VERBOSE="1"
 
 OUTPUT=$( "$SANDBOX" "$FIXTURE" 2>&1 ) || true
 
