@@ -84,6 +84,10 @@ SHIM_PATH="$(realpath "$(dirname "$0")/dotslash-shim")"
 
 mkdir -p "$HOST_BIN_CACHE"
 
+# Host UID/GID for ownership-aware tmpfs mounts
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+
 # Base container command
 PODMAN_ARGS=(
     run --rm -it
@@ -92,7 +96,7 @@ PODMAN_ARGS=(
     --cap-drop=all
     --read-only
     --tmpfs /tmp
-    --tmpfs /home
+    --tmpfs "/home:uid=$HOST_UID,gid=$HOST_GID,mode=0755"
     --memory=1g
     --cpus=1.0
     --pids-limit=128
