@@ -3,6 +3,10 @@
 
 SHELL := /usr/bin/env bash
 
+# Disable parallel make to avoid interleaved outputo
+# and podman errors due to concurrent container runs.
+MAKEFLAGS += --no-print-directory -j1
+
 DOTSLASH_FILES := $(wildcard bin/*.dotslash)
 TEST_TARGETS := $(DOTSLASH_FILES:.dotslash=.test)
 
