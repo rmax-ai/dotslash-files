@@ -6,6 +6,9 @@ SHELL := /usr/bin/env bash
 DOTSLASH_FILES := $(wildcard bin/*.dotslash)
 TEST_TARGETS := $(DOTSLASH_FILES:.dotslash=.test)
 
+# Default platform for sandbox tests (can be overridden by environment)
+TEST_SANDBOX_PLATFORM ?= linux/amd64
+
 .PHONY: test shim-tests check-deps clean
 
 # Default test target
@@ -32,7 +35,11 @@ check-deps:
 	@if ! command -v podman >/dev/null 2>&1; then \
 		echo "Warning: podman not found; skipping sandbox test for $<"; \
 	else \
-		OUTPUT="$$(./scripts/dotslash-sandbox "$<" --version 2>&1)"; \
+		if [ -n "$(TEST_SANDBOX_PLATFORM)" ]; then \
+			OUTPUT="$$(SANDBOX_PLATFORM=$(TEST_SANDBOX_PLATFORM) ./scripts/dotslash-sandbox "$<" --version 2>&1)"; \
+		else \
+			OUTPUT="$$(./scripts/dotslash-sandbox "$<" --version 2>&1)"; \
+		fi; \
 		STATUS=$$?; \
 		if [ $$STATUS -eq 0 ]; then \
 			echo "✓ $< passed"; \
