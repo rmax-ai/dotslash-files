@@ -1,0 +1,52 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=sharkdp/numbat TAG=v1.18.0",
+  "name": "numbat",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 2573605,
+      "hash": "sha256",
+      "digest": "94090eb6ccbeb20c2aa301e7ae6e346d864dbcf0c753e93fdb69909d8e50080c",
+      "format": "tar.gz",
+      "path": "numbat-v1.18.0-aarch64-apple-darwin/numbat",
+      "providers": [
+        { "url": "https://github.com/sharkdp/numbat/releases/download/v1.18.0/numbat-v1.18.0-aarch64-apple-darwin.tar.gz" },
+        { "type": "github-release", "repo": "sharkdp/numbat", "tag": "v1.18.0", "name": "numbat-v1.18.0-aarch64-apple-darwin.tar.gz" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 2736773,
+      "hash": "sha256",
+      "digest": "9bc9750c315ee6a2369eaff2d22c57c5e930753a7ef353cf64dc8b3e6b163c76",
+      "format": "tar.gz",
+      "path": "numbat-v1.18.0-x86_64-apple-darwin/numbat",
+      "providers": [
+        { "url": "https://github.com/sharkdp/numbat/releases/download/v1.18.0/numbat-v1.18.0-x86_64-apple-darwin.tar.gz" },
+        { "type": "github-release", "repo": "sharkdp/numbat", "tag": "v1.18.0", "name": "numbat-v1.18.0-x86_64-apple-darwin.tar.gz" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 2654820,
+      "hash": "sha256",
+      "digest": "f8de8d321a5516fee108d37ee33baa72461efc1faa23b395e21c3facd1bae711",
+      "format": "tar.gz",
+      "path": "numbat-v1.18.0-aarch64-unknown-linux-gnu/numbat",
+      "providers": [
+        { "url": "https://github.com/sharkdp/numbat/releases/download/v1.18.0/numbat-v1.18.0-aarch64-unknown-linux-gnu.tar.gz" },
+        { "type": "github-release", "repo": "sharkdp/numbat", "tag": "v1.18.0", "name": "numbat-v1.18.0-aarch64-unknown-linux-gnu.tar.gz" }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 2855701,
+      "hash": "sha256",
+      "digest": "eb57bc9991266473d49eec6c9bf887173baf42dba30005b605ea60f77537ffb1",
+      "format": "tar.gz",
+      "path": "numbat-v1.18.0-x86_64-unknown-linux-gnu/numbat",
+      "providers": [
+        { "url": "https://github.com/sharkdp/numbat/releases/download/v1.18.0/numbat-v1.18.0-x86_64-unknown-linux-gnu.tar.gz" },
+        { "type": "github-release", "repo": "sharkdp/numbat", "tag": "v1.18.0", "name": "numbat-v1.18.0-x86_64-unknown-linux-gnu.tar.gz" }
+      ]
+    }
+  }
+}
