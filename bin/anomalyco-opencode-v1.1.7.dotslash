@@ -1,0 +1,52 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=anomalyco/opencode TAG=v1.1.7",
+  "name": "opencode",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 32787714,
+      "hash": "sha256",
+      "digest": "311840c5b6071771f16d5924353891006630708390e133d5e8c00f9840c38dcf",
+      "format": "zip",
+      "path": "opencode",
+      "providers": [
+        { "url": "https://github.com/anomalyco/opencode/releases/download/v1.1.7/opencode-darwin-arm64.zip" },
+        { "type": "github-release", "repo": "anomalyco/opencode", "tag": "v1.1.7", "name": "opencode-darwin-arm64.zip" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 35086379,
+      "hash": "sha256",
+      "digest": "67689edc3621ebbd56f37fd796b0908bd40db6939e597a86102257d8041352b7",
+      "format": "zip",
+      "path": "opencode",
+      "providers": [
+        { "url": "https://github.com/anomalyco/opencode/releases/download/v1.1.7/opencode-darwin-x64.zip" },
+        { "type": "github-release", "repo": "anomalyco/opencode", "tag": "v1.1.7", "name": "opencode-darwin-x64.zip" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 49239328,
+      "hash": "sha256",
+      "digest": "7a58ac51c62323b59cf60321080887a4b7bf6d0aa77c0729709b9e02db39dba1",
+      "format": "tar.gz",
+      "path": "opencode",
+      "providers": [
+        { "url": "https://github.com/anomalyco/opencode/releases/download/v1.1.7/opencode-linux-arm64.tar.gz" },
+        { "type": "github-release", "repo": "anomalyco/opencode", "tag": "v1.1.7", "name": "opencode-linux-arm64.tar.gz" }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 50788971,
+      "hash": "sha256",
+      "digest": "5dae522fb1e8c2784279ea0dde2122001a9dcc11945b2596d336ad4ac41314c7",
+      "format": "tar.gz",
+      "path": "opencode",
+      "providers": [
+        { "url": "https://github.com/anomalyco/opencode/releases/download/v1.1.7/opencode-linux-x64.tar.gz" },
+        { "type": "github-release", "repo": "anomalyco/opencode", "tag": "v1.1.7", "name": "opencode-linux-x64.tar.gz" }
+      ]
+    }
+  }
+}
