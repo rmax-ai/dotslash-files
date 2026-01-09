@@ -57,16 +57,40 @@ PODMAN_BIN="${PODMAN_BIN:-podman}"
 shift 1
 
 # Platform selection:
-# - If SANDBOX_PLATFORM is explicitly set, use it.
-# - If unset, we default to the host platform (no --platform arg passed to podman).
-#   This keeps default behavior compatible with host and CI unless a platform is
-#   intentionally forced (for example via TEST_SANDBOX_PLATFORM in the Makefile).
+# - If SANDBOX_PLATFORM is explicitly set, the script will try to use it.
+# - By default, we use the host platform (no --platform arg passed to podman).
+# - If the requested SANDBOX_PLATFORM differs from the host platform, we will
+#   *by default* prefer the host platform (to avoid slow emulation). To allow
+#   emulation (e.g., run linux/amd64 on an arm host), set
+#   SANDBOX_ALLOW_EMULATION=1 in the environment.
 SANDBOX_PLATFORM="${SANDBOX_PLATFORM:-}"
 
-# If a platform is explicitly set, inform the user
+# Normalize host platform (linux/amd64, linux/arm64)
+HOST_UNAME="$(uname -m)"
+case "$HOST_UNAME" in
+    x86_64|amd64) HOST_PLATFORM="linux/amd64" ;; 
+    aarch64|arm64) HOST_PLATFORM="linux/arm64" ;; 
+    *) HOST_PLATFORM="linux/$(echo "$HOST_UNAME" | tr A-Z a-z)" ;;
+esac
+
+# If SANDBOX_PLATFORM is explicitly set and differs from the host, handle
+# mismatch according to SANDBOX_ALLOW_EMULATION.
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
-    echo "Using platform: $SANDBOX_PLATFORM"
+    if [[ "$SANDBOX_PLATFORM" != "$HOST_PLATFORM" ]]; then
+        if [[ "${SANDBOX_ALLOW_EMULATION:-}" != "1" ]]; then
+            echo "Note: requested platform '$SANDBOX_PLATFORM' differs from host '$HOST_PLATFORM'." >&2
+            echo "Defaulting to host platform '$HOST_PLATFORM' to avoid emulation." >&2
+            echo "Set SANDBOX_ALLOW_EMULATION=1 to permit running '$SANDBOX_PLATFORM' via emulation." >&2
+            # Unset SANDBOX_PLATFORM so we don't pass --platform to podman
+            SANDBOX_PLATFORM=""
+        else
+            echo "Using requested platform via emulation: $SANDBOX_PLATFORM" >&2
+        fi
+    else
+        echo "Using platform: $SANDBOX_PLATFORM"
+    fi
 fi
+
 
 # Resolve absolute path of the dotslash file and its directory
 ABS_FILE_PATH=$(realpath "$DOTSLASH_FILE")
