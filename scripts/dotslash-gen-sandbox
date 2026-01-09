@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# dotslash-gen-sandbox: Run dotslash-gen in the dotslash-sandbox.
+#
+# This script wraps dotslash-gen with dotslash-sandbox to ensure a reproducible
+# and clean environment. It automatically mounts the required tools (opencode, gh)
+# from the bin/ directory as DotSlash shims inside the sandbox.
+
+DOTSLASH_VERBOSE="${DOTSLASH_VERBOSE:-0}"
+
+# Find script and root directories
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ROOT_DIR=$(dirname "$SCRIPT_DIR")
+
+# Always run from the root directory so dotslash-sandbox mounts /work correctly
+cd "$ROOT_DIR"
+
+# 1. Find the required dotslash files in bin/
+# We search for opencode (requirement) and gh/jq (dependencies of dotslash-gen)
+OPENCODE_DOTSLASH=$(find bin -name "*opencode*.dotslash" | head -n 1)
+GH_DOTSLASH=$(find bin -name "*cli-cli*.dotslash" | head -n 1)
+JQ_DOTSLASH=$(find bin -name "*jqlang-jq*.dotslash" | head -n 1)
+
+if [[ -z "$OPENCODE_DOTSLASH" ]]; then
+    echo "Error: opencode dotslash file not found in bin/" >&2
+    exit 1
+fi
+
+if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
+    echo "Found opencode: $OPENCODE_DOTSLASH" >&2
+    [[ -n "$GH_DOTSLASH" ]] && echo "Found gh: $GH_DOTSLASH" >&2
+    [[ -n "$JQ_DOTSLASH" ]] && echo "Found jq: $JQ_DOTSLASH" >&2
+fi
+
+# 2. Create a temporary directory for shims
+# These shims will be symlinked to the DotSlash manifests in the repo.
+# Since the repo is mounted at /work in the container, we point the links
+# to /work/bin/...
+TMP_BIN=$(mktemp -d)
+trap 'rm -rf "$TMP_BIN"' EXIT
+
+# Create symlinks that will be valid INSIDE the container.
+# Relative to /work/bin/ in the container.
+ln -s "/work/bin/$(basename "$OPENCODE_DOTSLASH")" "$TMP_BIN/opencode"
+
+if [[ -n "$GH_DOTSLASH" ]]; then
+    ln -s "/work/bin/$(basename "$GH_DOTSLASH")" "$TMP_BIN/gh"
+fi
+
+if [[ -n "$JQ_DOTSLASH" ]]; then
+    ln -s "/work/bin/$(basename "$JQ_DOTSLASH")" "$TMP_BIN/jq"
+fi
+
+# 3. Set up sandbox environment variables
+# - GITHUB_TOKEN: required for 'gh' and 'opencode' inside the sandbox.
+if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+    # Attempt to retrieve token from host gh if available
+    if command -v gh >/dev/null 2>&1; then
+        [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Retrieving GITHUB_TOKEN from host gh..." >&2
+        GITHUB_TOKEN=$(gh auth token 2>/dev/null || true)
+    fi
+
+    if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+        echo "Error: GITHUB_TOKEN is not set." >&2
+        echo "The sandbox environment does not have access to your host's keychain." >&2
+        echo "Please set it: export GITHUB_TOKEN=\$(gh auth token)" >&2
+        exit 1
+    fi
+    export GITHUB_TOKEN
+    [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "GITHUB_TOKEN set successfully." >&2
+fi
+
+# - SANDBOX_ADDITIONAL_PATH: mounted as /extra_bin and added to PATH
+# - SANDBOX_ENV: pass through GITHUB_TOKEN for 'gh' and 'opencode'
+# - SANDBOX_OUTPUT: default to current directory to allow writing files
+export SANDBOX_ADDITIONAL_PATH="$TMP_BIN"
+export SANDBOX_ENV="GITHUB_TOKEN ${SANDBOX_ENV:-}"
+export SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-$PWD}"
+
+# 4. Handle output path
+# dotslash-gen writes to the current directory by default, which is READ-ONLY (/work).
+# We encourage the user to use /output, or we could potentially inject it.
+has_output=false
+for arg in "$@"; do
+    if [[ "$arg" == output=* ]]; then
+        has_output=true
+        break
+    fi
+done
+
+if [[ "$has_output" == "false" ]]; then
+    echo "Note: Running in sandbox. The current directory (/work) is read-only." >&2
+    echo "Hint: Use 'output=/output/filename.dotslash' to save the result to the host." >&2
+fi
+
+if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
+    echo "Running dotslash-sandbox for dotslash-gen..." >&2
+fi
+
+# 5. Execute dotslash-gen via dotslash-sandbox
+"$SCRIPT_DIR/dotslash-sandbox" "$SCRIPT_DIR/dotslash-gen" "$@"

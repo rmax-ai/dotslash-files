@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+#
+# dotslash-gen — generate `.dotslash` release descriptors via an embedded prompt.
+# Home: https://github.com/rmax-ai/dotslash-files/
+#
+# See `README.md` for usage and details.
+#
+set -euo pipefail
+set -o errtrace
+
+error_handler() {
+	echo "dotslash-gen failed while building ${output_file:-<unknown>}" >&2
+	exit 1
+}
+trap 'error_handler' ERR
+
+usage() {
+	cat <<'EOF'
+Usage: $0 repo=<owner/repo> [tag=<tag>] [output=<file>]
+
+Runs the DotSlash generator via opencode using the embedded prompt and resolves the
+requested tag (defaulting to `latest`). The generated `.dotslash` receives a header
+comment noting the script invocation metadata.
+
+Environment variables:
+  OPENCODE_BIN        Path to the `opencode` binary (default: `opencode`).
+  OPENCODE_RUN_ARGS   Additional arguments to pass to `opencode run` (default: empty).
+EOF
+	exit 1
+}
+
+repo=""
+tag="latest"
+output=""
+
+for arg in "$@"; do
+	case "$arg" in
+	repo=*) repo=${arg#repo=} ;;
+	tag=*) tag=${arg#tag=} ;;
+	output=*) output=${arg#output=} ;;
+	*)
+		echo "Unknown argument: $arg" >&2
+		usage
+		;;
+	esac
+done
+
+if [[ -z $repo ]]; then
+	echo "Missing repo argument." >&2
+	usage
+fi
+
+echo "Verifying repository $repo exists..."
+if ! gh repo view "$repo" >/dev/null 2>&1; then
+	echo "Repository $repo not found or inaccessible." >&2
+	exit 1
+fi
+
+if [[ $tag == "latest" ]]; then
+	echo "Resolving latest tag for $repo..."
+	resolved_tag=$(gh release -R "$repo" view --json tagName --template '{{.tagName}}' 2>/dev/null || true)
+	if [[ -n "$resolved_tag" ]]; then
+		tag=$resolved_tag
+		echo "Resolved latest to $tag"
+	fi
+fi
+
+sanitized_repo=${repo//\//-}
+output_file=${output:-${sanitized_repo}-${tag}.dotslash}
+
+prompt_file=$(mktemp /tmp/dotslash-prompt.XXXXXX)
+trap 'rm -f "$prompt_file"' EXIT
+
+cat <<'PROMPT_EOF' >"$prompt_file"
+# DotSlash File Generation Prompt
+
+Use this prompt to generate and validate a DotSlash configuration file for a given GitHub repository.
+
+## Input Variables
+- **REPO**: `[OWNER/REPO]` (e.g., `direnv/direnv`)
+- **TAG**: `[TAG_NAME]` (e.g., `v2.37.1`). If omitted or set to `latest`, resolve the actual latest release tag and use it everywhere.
+- **TEMPLATE**: `example.dotslash` (default template file to guide structure)
+
+## Goal
+Generate a complete, DotSlash-compatible `.dotslash` file for the specified release. The generated file must parse with `dotslash -- parse` and run `./<file> --version` (or `--help`) on a matching platform.
+
+## Key Rules (short)
+- Platform support: ONLY focus on `macos-aarch64`, `macos-x86_64`, `linux-aarch64`, `linux-x86_64`. SKIP Windows.
+- For raw binary release assets (not archives): do NOT include a `format` field. `path` MUST be a non-empty string (the executable filename, e.g., `direnv`).
+- For archive assets: set `format` to one of the canonical allowed values (see list below) and set `path` to the relative path inside the archive (e.g., `bin/direnv`).
+- Lazy downloads: Do NOT download archives unless validation fails (see point 7).
+- Cache: ALWAYS download assets (archives, checksums) into `$HOME/.cache/dotslash-gen/[REPO]/[TAG]/`.
+- Digests: if `gh` returns a `digest` like `sha256:<hex>`, set `hash` to `sha256` and `digest` to `<hex>` (strip prefix). If missing, locate checksum assets and parse them.
+- Always include two providers per platform: a direct `url` and a `github-release` object with `repo`, `tag`, and `name`.
+
+## Allowed formats (canonical values)
+- `bz2`, `gz`, `tar`, `tar.bz2`, `tar.gz`, `tar.zst`, `tar.xz`, `xz`, `zst`, `zip`
+
+## Instructions (detailed)
+
+1. **Header requirement**: Ensure the generated `.dotslash` begins with the `#!/usr/bin/env dotslash` shebang. The JSON body MUST include a `_generated_by` key documenting the script name, input variables, and the resolved tag. Example:
+   `"_generated_by": "dotslash-gen REPO=oven-sh/bun TAG=bun-v1.3.5"`
+
+2. Analyze `example.dotslash`
+- Confirm the `#!/usr/bin/env dotslash` shebang is present and that JSON follows the examples.
+
+3. Fetch release metadata
+- Preferred: `gh release -R [REPO] view [TAG] --json assets,apiUrl,tagName`
+- If `TAG` is `latest`, omit it: `gh release -R [REPO] view --json assets,apiUrl,tagName`
+- If the view command fails (e.g., the tag doesn't exist), fallback to:
+  - `gh release -R [REPO] list --limit 50` and pick the entry marked `Latest`. Use its `tagName`.
+
+4. Platform mapping (deterministic heuristics first)
+- Focus ONLY on: `macos-aarch64`, `macos-x86_64`, `linux-aarch64`, `linux-x86_64`.
+- Skip Windows and any other platforms.
+- Identify OS keywords in filenames: `darwin`/`macos`/`apple` → `macos`; `linux` → `linux`.
+- Identify arch keywords: `arm64`/`aarch64` → `aarch64`; `amd64`/`x86_64`/`x64` → `x86_64`; fallback to asset metadata if ambiguous.
+- Prefer deterministic filename patterns (e.g., `direnv.linux-amd64` → `linux-x86_64`). Use an LLM only as a fallback for tricky names.
+
+5. Internal path rules (CRITICAL)
+- If the asset filename is a raw executable (no archive extension), set `path` to the executable filename (the basename of the asset file) — this must be a non-empty string.
+- For archives (`.tar.gz`, `.zip`, etc.), set `format` to a canonical allowed value and set `path` to the relative path inside the archive (e.g., `direnv` or `bin/direnv`).
+- If the archive contains a top-level folder (often named after the archive itself), the `path` MUST include that prefix. Example: `ripgrep-15.1.0-aarch64-apple-darwin.tar.gz` for binary `ripgrep` -> `path: "ripgrep-15.1.0-aarch64-apple-darwin/ripgrep"`.
+- Examples:
+  - Raw: `direnv.linux-amd64` → `path: "direnv"` (omit `format`).
+  - Archive: `hermes-cli-linux-v0.12.0.tar.gz` → `format: "tar.gz"`, `path: "hermes"`.
+  - Nested Archive: `ripgrep-15.1.0-x86_64-unknown-linux-musl.tar.gz` → `format: "tar.gz"`, `path: "ripgrep-15.1.0-x86_64-unknown-linux-musl/ripgrep"`.
+
+6. Digest & checksum handling
+- If the asset JSON contains `digest` and it's prefixed (e.g., `sha256:<hex>`), strip the prefix and set `hash` to the algorithm (e.g., `sha256`) and `digest` to the hex string.
+- If the digest is missing or empty:
+  - Search for checksum assets: names containing `checksums`, `SHA256SUMS`, `*.sha256` (case-insensitive).
+  - Download the checksum file: `gh release -R [REPO] download [TAG] -p "checksums*" --dir "$HOME/.cache/dotslash-gen/[REPO]/[TAG]/"` (or matching pattern).
+  - Parse common lines using regexes such as:
+    - `([A-Fa-f0-9]{64})\s+\*?(.+)` (captures `<hex><whitespace><filename>`)
+    - `SHA256 \((.+)\) = ([A-Fa-f0-9]{64})` (captures `(filename) = <hex>`)
+  - Match the asset filename to the parsed checksum entry and set `hash`=`sha256`, `digest`=`<hex>`.
+
+7. Archive inspection (Lazy/Deferred - ONLY if needed)
+- Do NOT download or inspect archives eagerly.
+- First generation must use a guessed `path` (e.g., the binary name or basename of the archive).
+- ONLY if the subsequent validation/execution test in step 9 fails with a path-related error (e.g., "file not found" or "not an executable"), download the archive to `$HOME/.cache/dotslash-gen/[REPO]/[TAG]/` and list its contents to find the correct path:
+  - `tar -tf path/to/asset.tar.gz | head -n 200` or `unzip -l path/to/asset.zip | head -n 200`.
+- Identify the correct executable path and update the DotSlash file.
+
+8. Construct the DotSlash file targeted at the path specified by the environment variable `OUTPUT` (if set) or `[REPO]-[RESOLVED_TAG].dotslash`
+- Write the descriptor file to the path indicated by the environment variable `OUTPUT` (for example `$OUTPUT`). If `OUTPUT` is not set, use `[REPO]-[RESOLVED_TAG].dotslash` (if TAG is "latest", replace it with the actual tag name).
+- Shebang first: `#!/usr/bin/env dotslash`
+- JSON body with `_generated_by`, `name`, and `platforms` keys.
+- For each platform entry include:
+  - `size` (from asset metadata),
+  - `hash` (e.g., `sha256`),
+  - `digest` (hex string),
+  - `format` (ONLY for archives, using canonical values),
+  - `path` (non-empty string pointing to the executable inside the asset or archive),
+  - `providers`: a list with a direct `url` and a `github-release` provider object with `repo`, `tag`, and `name`.
+
+9. Step-by-Step Validation & Execution Test (MANDATORY)
+The agent MUST perform the following checks sequentially and immediately fix any failures before proceeding.
+- Write the file to the determined path (e.g., `[REPO]-[RESOLVED_TAG].dotslash`) and `chmod +x` it.
+- JSON syntax check: `jq -e` on the file body (skip the shebang line when piping to `jq`). If it fails, fix the JSON structure.
+- Structural checks (automated):
+  - Every platform entry has a non-empty string `path`.
+  - `format` is either omitted or one of allowed values.
+  - `hash` and `digest` are present and `digest` is a hex string.
+- dotslash parse: Run `dotslash -- parse [FILE]`. If it fails, analyze the error message and apply common fixes from the "Troubleshooting" section.
+- Execution test: Run `./[FILE] --version` (or `--help`). If execution fails (e.g., "file not found" or "no such file or directory" despite it being present), it usually means the `path` inside the archive is incorrect or the `format` is wrong.
+
+10. Iterative Troubleshooting & Auto-fix
+If any step in the validation fails, the agent MUST diagnose the error and apply a fix immediately.
+- If `dotslash` fails with `unknown variant 'plain'` ⇒ remove `format` for that platform.
+- If `dotslash` fails with `invalid type: null` or otherwise complains about `path` being null ⇒ set `path` to the executable filename (derive from asset name or inspect the archive).
+- If `digest` contains an algorithm prefix (e.g., `sha256:`) ⇒ strip prefix and set `hash` accordingly.
+- If the execution test returns "no such file or directory" or "not found":
+  - The `path` inside the archive is likely wrong. Use `tar -tf` or `unzip -l` to find the correct relative path to the executable.
+  - Ensure the `format` matches the asset extension exactly.
+- After each fix, RE-RUN the entire validation process starting from the Step-by-Step Validation.
+
+## Template (embedded example.dotslash)
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=facebook/hermes TAG=v0.12.0",
+  "name": "hermes",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 47099598,
+      "hash": "blake3",
+      "digest": "8d2c1bcefc2ce6e278167495810c2437e8050780ebb4da567811f1d754ad198c",
+      "format": "tar.gz",
+      "path": "hermes",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/hermes/releases/download/v0.12.0/hermes-cli-linux-v0.12.0.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "facebook/hermes",
+          "tag": "v0.12.0",
+          "name": "hermes-cli-linux-v0.12.0.tar.gz"
+        }
+      ],
+    },
+    // additional platforms...
+  }
+}
+
+## Final output
+- If validation passes: output the final DotSlash file content and a confirmation of validation success.
+- If validation fails: apply auto-fixes where possible, rerun validation, and if still failing, output the failure reason and manual troubleshooting steps.
+
+## Notes for automation
+- Prefer deterministic heuristics over LLM subagents. If using LLM agent, validate and auto-fix programmatically.
+- Avoid interactive prompts for filename in automation; accept a CLI flag or default to `owner-repo`.
+- Keep prompt examples short and concrete so the LLM subagent can follow the schema strictly.
+
+(End of prompt)
+PROMPT_EOF
+
+echo "Generating DotSlash descriptor for $repo (tag=$tag) into $output_file"
+
+echo "Executing ${OPENCODE_BIN:-opencode} run with embedded prompt..."
+
+# Allow the caller to override the opencode binary and pass extra args:
+#   OPENCODE_BIN=opencode
+#   OPENCODE_RUN_ARGS='--verbose --no-cache'
+OPENCODE_BIN=${OPENCODE_BIN:-opencode}
+OPENCODE_RUN_ARGS=${OPENCODE_RUN_ARGS:-}
+if [[ -n "$OPENCODE_RUN_ARGS" ]]; then
+	# Split into an array so whitespace-separated args are handled properly
+	read -r -a OPENCODE_RUN_ARGS_ARR <<< "$OPENCODE_RUN_ARGS"
+else
+	OPENCODE_RUN_ARGS_ARR=()
+fi
+
+"$OPENCODE_BIN" run ${OPENCODE_RUN_ARGS_ARR[@]+"${OPENCODE_RUN_ARGS_ARR[@]}"} --file "$prompt_file" -- "REPO=$repo" "TAG=$tag" "OUTPUT=$output_file"
+
+# Ensure opencode produced the expected output file
+if [[ ! -f "$output_file" || ! -s "$output_file" ]]; then
+	echo "opencode did not produce expected output: $output_file" >&2
+	exit 1
+fi
+
+if [[ "$(head -n 1 "$output_file")" != "#!/usr/bin/env dotslash" ]]; then
+	echo "Missing or invalid shebang in $output_file" >&2
+	exit 1
+fi
+
+if ! tail -n +2 "$output_file" | jq -e . >/dev/null 2>&1; then
+	echo "Invalid JSON structure in $output_file" >&2
+	exit 1
+fi
+
+echo "Validating generated descriptor with dotslash -- parse..."
+if ! dotslash -- parse "$output_file"; then
+	echo "dotslash -- parse failed for $output_file" >&2
+	exit 1
+fi
+
+echo "Descriptor ready: $output_file"
+echo "Execute \"./$output_file --help\" or \"./$output_file --version\" to confirm runtime behavior."
