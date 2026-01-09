@@ -1,0 +1,52 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=containers/podman TAG=v5.7.1",
+  "name": "podman-remote",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 24152111,
+      "hash": "sha256",
+      "digest": "e5eed3ab36c93bec9738241974ff86d173bd1251621a8f2f7aec933c579f4968",
+      "format": "zip",
+      "path": "podman-5.7.1/usr/bin/podman",
+      "providers": [
+        { "url": "https://github.com/containers/podman/releases/download/v5.7.1/podman-remote-release-darwin_arm64.zip" },
+        { "type": "github-release", "repo": "containers/podman", "tag": "v5.7.1", "name": "podman-remote-release-darwin_arm64.zip" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 25569642,
+      "hash": "sha256",
+      "digest": "aa804332f8bcc8b65d34e369bcc8de9ad5d6acda9cf0a2eb4781db0626a361f1",
+      "format": "zip",
+      "path": "podman-5.7.1/usr/bin/podman",
+      "providers": [
+        { "url": "https://github.com/containers/podman/releases/download/v5.7.1/podman-remote-release-darwin_amd64.zip" },
+        { "type": "github-release", "repo": "containers/podman", "tag": "v5.7.1", "name": "podman-remote-release-darwin_amd64.zip" }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 22174236,
+      "hash": "sha256",
+      "digest": "6a667c811daf2d4340cf5d8f1264c5ae9902519ca414c676514359d5c165576f",
+      "format": "tar.gz",
+      "path": "bin/podman-remote-static-linux_amd64",
+      "providers": [
+        { "url": "https://github.com/containers/podman/releases/download/v5.7.1/podman-remote-static-linux_amd64.tar.gz" },
+        { "type": "github-release", "repo": "containers/podman", "tag": "v5.7.1", "name": "podman-remote-static-linux_amd64.tar.gz" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 20392534,
+      "hash": "sha256",
+      "digest": "4faf15e2114166e859bfed470f0c3eb006bbdb8934399a46259b201697635e1c",
+      "format": "tar.gz",
+      "path": "bin/podman-remote-static-linux_arm64",
+      "providers": [
+        { "url": "https://github.com/containers/podman/releases/download/v5.7.1/podman-remote-static-linux_arm64.tar.gz" },
+        { "type": "github-release", "repo": "containers/podman", "tag": "v5.7.1", "name": "podman-remote-static-linux_arm64.tar.gz" }
+      ]
+    }
+  }
+}
