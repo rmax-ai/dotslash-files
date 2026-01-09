@@ -135,7 +135,8 @@ HOST_GID="$(id -g)"
 # Create a temporary host home directory for the container and make it writable
 # by the host user. This avoids permission-denied errors when the shim attempts
 # to create $HOME/.cache inside the container.
-HOST_TMP_HOME="$(mktemp -d)"
+# We use a directory in the current workspace to ensure it is shared with the Podman VM.
+HOST_TMP_HOME=$(mktemp -d "$PWD/.sandbox-home.XXXXXX")
 chown "$HOST_UID:$HOST_GID" "$HOST_TMP_HOME" || true
 trap 'rm -rf "$HOST_TMP_HOME"' EXIT
 
@@ -147,7 +148,6 @@ PODMAN_ARGS=(
     --cap-drop=all
     --read-only
     --tmpfs /tmp
-    --memory=1g
     --cpus=1.0
     --pids-limit=128
     -v "$PWD:$WORK_DIR:ro"
@@ -199,12 +199,8 @@ fi
 # unlike debian-slim, while being very compatible with DotSlash.
 SANDBOX_IMAGE="${SANDBOX_IMAGE:-fedora:latest}"
 
-if [[ -n "$SANDBOX_PLATFORM" ]]; then
-    "$PODMAN_BIN" "${PODMAN_ARGS[@]}" --platform "$SANDBOX_PLATFORM" \
-        --env "PATH=$ENV_PATH" \
-        "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
-else
-    "$PODMAN_BIN" "${PODMAN_ARGS[@]}" \
-        --env "PATH=$ENV_PATH" \
-        "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
-fi
+# Always specify the platform to avoid mismatched image warnings and ensure
+# we use the intended architecture (either host default or requested emulation).
+"$PODMAN_BIN" "${PODMAN_ARGS[@]}" --platform "$EFFECTIVE_PLATFORM" \
+    --env "PATH=$ENV_PATH" \
+    "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"

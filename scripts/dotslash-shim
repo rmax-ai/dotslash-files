@@ -42,12 +42,19 @@ if [[ -x "$DOTSLASH_BIN" ]]; then
 fi
 
 # Else, install dotslash and then run it
-echo "[dotslash-shim] Installing dotslash..." >&2
-mkdir -p "$(dirname "$DOTSLASH_BIN")"
-
 VERSION="$DOTSLASH_VERSION"
 OS="$(uname -s)"
 ARCH="$(uname -m)"
+
+echo "[dotslash-shim] Installing dotslash ($VERSION) for $OS/$ARCH..." >&2
+
+# Check for curl before attempting download
+if ! command -v curl >/dev/null 2>&1; then
+    echo "Error: curl is required but not found. Please ensure curl is installed." >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname "$DOTSLASH_BIN")"
 
 case "$OS" in
     Darwin)
@@ -76,7 +83,10 @@ esac
 
 TMP_ARCHIVE=$(mktemp)
 trap 'rm -f "$TMP_ARCHIVE"' EXIT
-curl -LSfs "$URL" -o "$TMP_ARCHIVE"
+echo "[dotslash-shim] Downloading from $URL ..." >&2
+# We use --progress-bar for better visibility since emulation can be slow.
+# --retry-connrefused and --retry 3 help with transient network issues.
+curl -Lf --progress-bar --connect-timeout 30 --retry 3 --retry-connrefused "$URL" -o "$TMP_ARCHIVE"
 
 if [[ -n "${DOTSLASH_SKIP_VERIFY:-}" ]]; then
     echo "[dotslash-shim] Skipping checksum verification (DOTSLASH_SKIP_VERIFY set)" >&2
@@ -90,10 +100,5 @@ fi
 
 tar fxz "$TMP_ARCHIVE" -C "$(dirname "$DOTSLASH_BIN")"
 chmod +x "$DOTSLASH_BIN"
-
-# Ensure runtime dependencies are checked inside the sandbox
-if [[ ! -x $(command -v curl) ]]; then
-    echo "Warning: curl is missing in the container. Dotslash downloads may fail." >&2
-fi
 
 exec "$DOTSLASH_BIN" "$@"
