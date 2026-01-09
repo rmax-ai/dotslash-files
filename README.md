@@ -1,62 +1,87 @@
-dotslash-files
+# dotslash-files
 
-This repository stores DOTSLASH wrapper files used across projects. A DOTSLASH file (commonly given a .ds extension) is a small script-like file that must begin with the shebang:
+This repository stores [DotSlash](https://dotslash-cli.com) wrapper files used across projects. A DotSlash file (commonly given a .dotslash extension) is a small script-like file that must begin with the shebang:
 
+```bash
 #!/usr/bin/env dotslash
+```
 
-and contain a JSON body that tells the dotslash runtime how to fetch and run the executable it represents. Any arguments passed on the dotslash command line after the DOTSLASH file are forwarded to the underlying executable.
+and contain a JSON body that tells the dotslash runtime how to fetch and run the executable it represents. Any arguments passed on the dotslash command line after the DotSlash file are forwarded to the underlying executable.
 
-Quick usage
+## Quick usage
 
-- Run a DOTSLASH file:
-  dotslash ./tool.ds -- <args>
+- Run a DotSlash file:
 
-- Validate / inspect a DOTSLASH file:
-  dotslash --parse ./tool.ds
+```bash
+dotslash ./tool.dotslash -- <args>
+```
+
+- Validate / inspect a DotSlash file:
+
+```bash
+dotslash -- parse ./tool.dotslash
+```
 
 - Prepare (fetch) the executable without running it:
-  dotslash --fetch ./tool.ds
+
+```bash
+dotslash -- fetch ./tool.dotslash
+```
 
 - Compute checksums:
-  dotslash --sha256 FILE
-  dotslash --b3sum FILE
 
-Example DOTSLASH file (illustrative)
+```bash
+dotslash -- sha256 FILE
+dotslash -- b3sum FILE
+```
 
+## Example DotSlash file (illustrative)
+
+```bash
 #!/usr/bin/env dotslash
+```
+
+```json
 {
   "name": "mytool",
   "provider": { "http": "https://example.com/bin/mytool-<platform>.tar.gz" },
   "run": { "cmd": ["mytool"] }
 }
+```
 
-Testing & validation
+## Testing & validation
 
 - Make the file executable:
-  chmod +x ./tool.ds
+
+```bash
+chmod +x ./tool.dotslash
+```
 
 - Validate JSON syntax (optional):
-  jq . ./tool.ds
 
-- Use dotslash --parse and dotslash --fetch to verify behaviour on your host.
+```bash
+jq . ./tool.dotslash
+```
 
-Best practices
+- Use `dotslash -- parse` and `dotslash -- fetch` to verify behaviour on your host.
 
-- Use the #!/usr/bin/env dotslash shebang and prefer a .ds extension for clarity.
-- Avoid hardcoding platform-specific paths; use provider templates and runtime outputs instead (see --help for supported placeholders).
+## Best practices
+
+- Use the `#!/usr/bin/env dotslash` shebang and prefer a `.dotslash` extension for clarity.
+- Avoid hardcoding platform-specific paths; use provider templates and runtime outputs instead (see `--help` for supported placeholders).
 - Pin artifacts with checksums when possible and prefer stable, versioned downloads.
+- For deployment, you can rename a `.dotslash` file to the target binary name and place it in a directory on your `PATH` (for example, `node-v24.0.0.dotslash` -> `~/bin/node`). After moving the file, ensure it is executable (for example: `chmod +x ~/bin/node`).
 
-Repository organization
+## Repository organization
 
-Store DOTSLASH files in a logical location (root, a tools/ directory, or a dedicated dots/ directory). Keep files small, well-documented, and executable.
+Store DotSlash files in a logical location (root, a `tools/` directory, or a dedicated `dots/` directory). Keep files small, well-documented, and executable.
 
-References
+## References
 
-- Local quick reference: /Users/rmax/docs/dotslash.md
-- Official project: https://dotslash-cli.com
+- Official project: [dotslash-cli.com](https://dotslash-cli.com)
 
-Contributing
+## Contributing
 
-1. Add your DOTSLASH file (make it executable).
-2. Validate locally with dotslash --parse and dotslash --fetch.
+1. Add your DotSlash file (make it executable).
+2. Validate locally with `dotslash -- parse` and `dotslash -- fetch`.
 3. Open a PR describing the tool, platforms supported (if any), and any checksums or verification steps.
