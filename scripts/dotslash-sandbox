@@ -84,9 +84,16 @@ SHIM_PATH="$(realpath "$(dirname "$0")/dotslash-shim")"
 
 mkdir -p "$HOST_BIN_CACHE"
 
-# Host UID/GID for ownership-aware tmpfs mounts
+# Host UID/GID for ownership-aware mounts
 HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
+
+# Create a temporary host home directory for the container and make it writable
+# by the host user. This avoids permission-denied errors when the shim attempts
+# to create $HOME/.cache inside the container.
+HOST_TMP_HOME="$(mktemp -d)"
+chown "$HOST_UID:$HOST_GID" "$HOST_TMP_HOME" || true
+trap 'rm -rf "$HOST_TMP_HOME"' EXIT
 
 # Base container command
 PODMAN_ARGS=(
@@ -96,7 +103,6 @@ PODMAN_ARGS=(
     --cap-drop=all
     --read-only
     --tmpfs /tmp
-    --tmpfs "/home:uid=$HOST_UID,gid=$HOST_GID,mode=0755"
     --memory=1g
     --cpus=1.0
     --pids-limit=128
@@ -105,6 +111,7 @@ PODMAN_ARGS=(
     -v "$SHIM_PATH:/usr/local/bin/dotslash:ro"
     -v "$HOST_CACHE:$CONTAINER_CACHE"
     -v "$HOST_BIN_CACHE:$CONTAINER_BIN"
+    -v "$HOST_TMP_HOME:$CONTAINER_HOME:rw"
     -e "DOTSLASH_CACHE=$CONTAINER_CACHE"
     -e "USER=$(whoami)"
     -e "HOME=$CONTAINER_HOME"
