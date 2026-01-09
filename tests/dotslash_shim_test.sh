@@ -7,6 +7,8 @@ set -euo pipefail
 # Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
+# NOTE: This test is run by `run_shim_tests.sh` (formerly `run_tests.sh`).
+
 SANDBOX="./scripts/dotslash-sandbox"
 FIXTURE="tests/fixtures/install_shim.dotslash"
 
