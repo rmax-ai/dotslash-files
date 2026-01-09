@@ -1,0 +1,79 @@
+#!/usr/bin/env dotslash
+{
+  "_generated_by": "dotslash-gen REPO=sharkdp/fd TAG=v10.3.0",
+  "name": "fd",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 1337349,
+      "hash": "sha256",
+      "digest": "0570263812089120bc2a5d84f9e65cd0c25e4a4d724c80075c357239c74ae904",
+      "format": "tar.gz",
+      "path": "fd-v10.3.0-aarch64-apple-darwin/fd",
+      "providers": [
+        {
+          "url": "https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "sharkdp/fd",
+          "tag": "v10.3.0",
+          "name": "fd-v10.3.0-aarch64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 1430203,
+      "hash": "sha256",
+      "digest": "50d30f13fe3d5914b14c4fff5abcbd4d0cdab4b855970a6956f4f006c17117a3",
+      "format": "tar.gz",
+      "path": "fd-v10.3.0-x86_64-apple-darwin/fd",
+      "providers": [
+        {
+          "url": "https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-x86_64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "sharkdp/fd",
+          "tag": "v10.3.0",
+          "name": "fd-v10.3.0-x86_64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 1608477,
+      "hash": "sha256",
+      "digest": "996b9b1366433b211cb3bbedba91c9dbce2431842144d925428ead0adf32020b",
+      "format": "tar.gz",
+      "path": "fd-v10.3.0-aarch64-unknown-linux-musl/fd",
+      "providers": [
+        {
+          "url": "https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "sharkdp/fd",
+          "tag": "v10.3.0",
+          "name": "fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 1759301,
+      "hash": "sha256",
+      "digest": "2b6bfaae8c48f12050813c2ffe1884c61ea26e750d803df9c9114550a314cd14",
+      "format": "tar.gz",
+      "path": "fd-v10.3.0-x86_64-unknown-linux-musl/fd",
+      "providers": [
+        {
+          "url": "https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-x86_64-unknown-linux-musl.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "sharkdp/fd",
+          "tag": "v10.3.0",
+          "name": "fd-v10.3.0-x86_64-unknown-linux-musl.tar.gz"
+        }
+      ]
+    }
+  }
+}
