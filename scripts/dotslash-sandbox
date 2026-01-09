@@ -56,6 +56,23 @@ SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-}"
 PODMAN_BIN="${PODMAN_BIN:-podman}"
 shift 1
 
+# Platform selection:
+# - If SANDBOX_PLATFORM is explicitly set, use it.
+# - If unset and the host is ARM (aarch64/arm64), default to x86_64 emulation (linux/amd64)
+#   to run binaries in the linux/amd64 architecture by default on ARM hosts.
+SANDBOX_PLATFORM="${SANDBOX_PLATFORM:-}"
+HOST_ARCH="$(uname -m)"
+if [[ -z "$SANDBOX_PLATFORM" ]]; then
+    if [[ "$HOST_ARCH" == "arm64" || "$HOST_ARCH" == "aarch64" ]]; then
+        SANDBOX_PLATFORM="linux/amd64"
+    fi
+fi
+
+# If a platform is selected, inform the user
+if [[ -n "$SANDBOX_PLATFORM" ]]; then
+    echo "Using platform: $SANDBOX_PLATFORM"
+fi
+
 # Resolve absolute path of the dotslash file and its directory
 ABS_FILE_PATH=$(realpath "$DOTSLASH_FILE")
 FILE_DIR=$(dirname "$ABS_FILE_PATH")
@@ -132,6 +149,11 @@ fi
 # unlike debian-slim, while being very compatible with DotSlash.
 SANDBOX_IMAGE="${SANDBOX_IMAGE:-fedora:latest}"
 
-"$PODMAN_BIN" "${PODMAN_ARGS[@]}" \
+PLATFORM_ARG=()
+if [[ -n "$SANDBOX_PLATFORM" ]]; then
+    PLATFORM_ARG=( --platform "$SANDBOX_PLATFORM" )
+fi
+
+"$PODMAN_BIN" "${PODMAN_ARGS[@]}" "${PLATFORM_ARG[@]}" \
     --env "PATH=$ENV_PATH" \
     "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
