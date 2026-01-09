@@ -102,7 +102,7 @@ else
     fi
 fi
 
-tar fxz "$TMP_ARCHIVE" -C "$(dirname "$DOTSLASH_BIN")"
+tar fxz "$TMP_ARCHIVE" --no-same-owner -C "$(dirname "$DOTSLASH_BIN")"
 chmod +x "$DOTSLASH_BIN"
 
 exec "$DOTSLASH_BIN" "$@"

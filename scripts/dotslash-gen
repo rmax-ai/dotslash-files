@@ -24,7 +24,8 @@ comment noting the script invocation metadata.
 
 Environment variables:
   OPENCODE_BIN        Path to the `opencode` binary (default: `opencode`).
-  OPENCODE_RUN_ARGS   Additional arguments to pass to `opencode run` (default: empty).
+  OPENCODE_CMD        Command to run (default: `opencode run`).
+  OPENCODE_CMD_ARGS   Additional arguments to pass to `opencode run` (default: empty).
 EOF
 	exit 1
 }
@@ -223,17 +224,19 @@ echo "Executing ${OPENCODE_BIN:-opencode} run with embedded prompt..."
 
 # Allow the caller to override the opencode binary and pass extra args:
 #   OPENCODE_BIN=opencode
-#   OPENCODE_RUN_ARGS='--verbose --no-cache'
+#   OPENCODE_CMD_ARGS='--verbose --no-cache'
 OPENCODE_BIN=${OPENCODE_BIN:-opencode}
-OPENCODE_RUN_ARGS=${OPENCODE_RUN_ARGS:-}
-if [[ -n "$OPENCODE_RUN_ARGS" ]]; then
+OPENCODE_CMD=${OPENCODE_CMD:-opencode run}
+OPENCODE_CMD_ARGS=${OPENCODE_CMD_ARGS:-}
+if [[ -n "$OPENCODE_CMD_ARGS" ]]; then
 	# Split into an array so whitespace-separated args are handled properly
-	read -r -a OPENCODE_RUN_ARGS_ARR <<< "$OPENCODE_RUN_ARGS"
+	read -r -a OPENCODE_CMD_ARGS_ARR <<< "$OPENCODE_CMD_ARGS"
 else
-	OPENCODE_RUN_ARGS_ARR=()
+	OPENCODE_CMD_ARGS_ARR=()
 fi
 
-"$OPENCODE_BIN" run ${OPENCODE_RUN_ARGS_ARR[@]+"${OPENCODE_RUN_ARGS_ARR[@]}"} --file "$prompt_file" -- "REPO=$repo" "TAG=$tag" "OUTPUT=$output_file"
+echo "Running command: $OPENCODE_CMD ${OPENCODE_CMD_ARGS_ARR[*]} --file $prompt_file -- REPO=$repo TAG=$tag OUTPUT=$output_file"
+$OPENCODE_CMD ${OPENCODE_CMD_ARGS_ARR[@]+"${OPENCODE_CMD_ARGS_ARR[@]}"} --file "$prompt_file" -- "REPO=$repo" "TAG=$tag" "OUTPUT=$output_file"
 
 # Ensure opencode produced the expected output file
 if [[ ! -f "$output_file" || ! -s "$output_file" ]]; then
