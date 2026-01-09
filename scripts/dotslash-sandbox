@@ -155,11 +155,12 @@ fi
 # unlike debian-slim, while being very compatible with DotSlash.
 SANDBOX_IMAGE="${SANDBOX_IMAGE:-fedora:latest}"
 
-PLATFORM_ARG=()
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
-    PLATFORM_ARG=( --platform "$SANDBOX_PLATFORM" )
+    "$PODMAN_BIN" "${PODMAN_ARGS[@]}" --platform "$SANDBOX_PLATFORM" \
+        --env "PATH=$ENV_PATH" \
+        "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
+else
+    "$PODMAN_BIN" "${PODMAN_ARGS[@]}" \
+        --env "PATH=$ENV_PATH" \
+        "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
 fi
-
-"$PODMAN_BIN" "${PODMAN_ARGS[@]}" "${PLATFORM_ARG[@]}" \
-    --env "PATH=$ENV_PATH" \
-    "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
