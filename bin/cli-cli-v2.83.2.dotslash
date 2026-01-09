@@ -1,0 +1,52 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=cli/cli TAG=v2.83.2",
+  "name": "gh",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 18151686,
+      "hash": "sha256",
+      "digest": "ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b092015e",
+      "format": "tar.gz",
+      "path": "gh_2.83.2_linux_amd64/bin/gh",
+      "providers": [
+        { "url": "https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_linux_amd64.tar.gz" },
+        { "type": "github-release", "repo": "cli/cli", "tag": "v2.83.2", "name": "gh_2.83.2_linux_amd64.tar.gz" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 16535735,
+      "hash": "sha256",
+      "digest": "b1a0c0a0fcf18524e36996caddc92a062355ed014defc836203fe20fba75a38e",
+      "format": "tar.gz",
+      "path": "gh_2.83.2_linux_arm64/bin/gh",
+      "providers": [
+        { "url": "https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_linux_arm64.tar.gz" },
+        { "type": "github-release", "repo": "cli/cli", "tag": "v2.83.2", "name": "gh_2.83.2_linux_arm64.tar.gz" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 19015005,
+      "hash": "sha256",
+      "digest": "6f1712519ccc768946791dc97da407bf188582345b73fef3d604d050ebf6f614",
+      "format": "zip",
+      "path": "gh_2.83.2_macOS_amd64/bin/gh",
+      "providers": [
+        { "url": "https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_macOS_amd64.zip" },
+        { "type": "github-release", "repo": "cli/cli", "tag": "v2.83.2", "name": "gh_2.83.2_macOS_amd64.zip" }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 17370410,
+      "hash": "sha256",
+      "digest": "ba3e0396ebbc8da17256144ddda503e4e79c8b502166335569f8390d6b75fa8d",
+      "format": "zip",
+      "path": "gh_2.83.2_macOS_arm64/bin/gh",
+      "providers": [
+        { "url": "https://github.com/cli/cli/releases/download/v2.83.2/gh_2.83.2_macOS_arm64.zip" },
+        { "type": "github-release", "repo": "cli/cli", "tag": "v2.83.2", "name": "gh_2.83.2_macOS_arm64.zip" }
+      ]
+    }
+  }
+}
