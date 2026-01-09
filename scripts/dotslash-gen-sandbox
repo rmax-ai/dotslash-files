@@ -38,7 +38,11 @@ fi
 # Since the repo is mounted at /work in the container, we point the links
 # to /work/bin/...
 TMP_BIN=$(mktemp -d)
-trap 'rm -rf "$TMP_BIN"' EXIT
+cleanup() {
+    rm -rf "$TMP_BIN"
+    [[ -n "${ENTRYPOINT_SH:-}" ]] && rm -f "$ENTRYPOINT_SH"
+}
+trap cleanup EXIT
 
 # Create symlinks that will be valid INSIDE the container.
 # Relative to /work/bin/ in the container.
@@ -72,11 +76,19 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 fi
 
 # - SANDBOX_ADDITIONAL_PATH: mounted as /extra_bin and added to PATH
-# - SANDBOX_ENV: pass through GITHUB_TOKEN for 'gh' and 'opencode'
+# - SANDBOX_ENV: pass through GITHUB_TOKEN and OPENCODE_API_KEY
 # - SANDBOX_OUTPUT: default to current directory to allow writing files
 export SANDBOX_ADDITIONAL_PATH="$TMP_BIN"
+export SANDBOX_ENV="DOTSLASH_VERBOSE ${SANDBOX_ENV:-}"
 export SANDBOX_ENV="GITHUB_TOKEN ${SANDBOX_ENV:-}"
+export SANDBOX_ENV="OPENCODE_API_KEY ${SANDBOX_ENV:-}"
+export SANDBOX_ENV="OPENCODE_CMD OPENCODE_CMD_ARGS ${SANDBOX_ENV:-}"
 export SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-$PWD}"
+
+if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
+    # Use --print-logs for verbosity in opencode run
+    export OPENCODE_CMD_ARGS="${OPENCODE_CMD_ARGS:-} --print-logs --log-level INFO"
+fi
 
 # 4. Handle output path
 # dotslash-gen writes to the current directory by default, which is READ-ONLY (/work).
@@ -98,5 +110,35 @@ if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
     echo "Running dotslash-sandbox for dotslash-gen..." >&2
 fi
 
-# 5. Execute dotslash-gen via dotslash-sandbox
-"$SCRIPT_DIR/dotslash-sandbox" "$SCRIPT_DIR/dotslash-gen" "$@"
+# 5. Create a container entrypoint script
+# This script runs inside the container and sets up a writable workspace.
+ENTRYPOINT_SH=$(mktemp /tmp/dotslash-gen-entrypoint.XXXXXX)
+chmod +x "$ENTRYPOINT_SH"
+cat <<'EOF' > "$ENTRYPOINT_SH"
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create a writable working directory in /tmp (memory)
+GEN_WORKDIR=$(mktemp -d /tmp/dotslash-gen-run.XXXXXX)
+cd "$GEN_WORKDIR"
+
+# Extract model from OPENCODE_CMD_ARGS if possible, or use default
+# This allows opencode to find opencode.json in the current (writable) dir
+# without trying to write to the read-only /work mount.
+MODEL="opencode/glm-4.7-free"
+if [[ "${OPENCODE_CMD_ARGS:-}" =~ --model[[:space:]]+([^[:space:]]+) ]]; then
+    MODEL="${BASH_REMATCH[1]}"
+fi
+
+cat <<JSON_EOF > opencode.json
+{
+  "model": "$MODEL"
+}
+JSON_EOF
+
+# Execute dotslash-gen (mounted at /work/scripts/dotslash-gen)
+exec /work/scripts/dotslash-gen "$@"
+EOF
+
+# 6. Execute via dotslash-sandbox
+"$SCRIPT_DIR/dotslash-sandbox" "$ENTRYPOINT_SH" "$@"

@@ -235,7 +235,6 @@ else
 	OPENCODE_CMD_ARGS_ARR=()
 fi
 
-echo "Running command: $OPENCODE_CMD ${OPENCODE_CMD_ARGS_ARR[*]} --file $prompt_file -- REPO=$repo TAG=$tag OUTPUT=$output_file"
 $OPENCODE_CMD ${OPENCODE_CMD_ARGS_ARR[@]+"${OPENCODE_CMD_ARGS_ARR[@]}"} --file "$prompt_file" -- "REPO=$repo" "TAG=$tag" "OUTPUT=$output_file"
 
 # Ensure opencode produced the expected output file
