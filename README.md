@@ -86,6 +86,11 @@ Store DotSlash files in a logical location (root, a `tools/` directory, or a ded
   - Usage: Invoke directly (`./scripts/dotslash-shim`) or let `dotslash-sandbox` mount it into containers.
   - Use cases: Run `dotslash` on systems without a global install (CI, containers), provide an isolated, verifiable runtime for DotSlash files.
 
+- `scripts/dotslash-doctor`
+  - Update .dotslash assets by downloading and verifying remote files.
+  - Usage: ./scripts/dotslash-doctor <file.dotslash>
+  - Use cases: Verify and update size, sha256, and path for platforms in a .dotslash file.
+
 ## References
 
 - Official project: [dotslash-cli.com](https://dotslash-cli.com)
