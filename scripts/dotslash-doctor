@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+#
+# dotslash-doctor — update .dotslash assets by downloading and verifying remote files.
+#
+set -euo pipefail
+
+usage() {
+	echo "Usage: $0 <file.dotslash>"
+	exit 1
+}
+
+if [[ $# -ne 1 ]]; then
+	usage
+fi
+
+input_file="$1"
+if [[ ! -f "$input_file" ]]; then
+	echo "File not found: $input_file" >&2
+	exit 1
+fi
+
+# Temporary directory for downloads
+tmp_dir=$(mktemp -d /tmp/dotslash-doctor.XXXXXX)
+trap 'rm -rf "$tmp_dir"' EXIT
+
+# Extract JSON body
+json_body=$(tail -n +2 "$input_file")
+
+# Validate JSON before processing
+if ! echo "$json_body" | jq . >/dev/null 2>&1; then
+	echo "Error: $input_file contains invalid JSON. Please fix it before running dotslash-doctor." >&2
+	exit 1
+fi
+
+name=$(echo "$json_body" | jq -r '.name')
+
+echo "Processing $input_file..."
+
+# Iterate over platforms
+platforms=$(echo "$json_body" | jq -r '.platforms | keys[]')
+
+new_json="$json_body"
+
+for platform in $platforms; do
+	echo "  Checking $platform..."
+
+	platform_obj=$(echo "$new_json" | jq -c ".platforms[\"$platform\"]")
+	url=$(echo "$platform_obj" | jq -r '.providers[] | select(.url != null) | .url' | head -n 1)
+
+	if [[ -z "$url" || "$url" == "null" ]]; then
+		echo "    No URL provider found for $platform. Skipping."
+		continue
+	fi
+
+	format=$(echo "$platform_obj" | jq -r '.format // empty')
+	current_path=$(echo "$platform_obj" | jq -r '.path // empty')
+
+	echo "    Downloading $url..."
+	filename=$(basename "$url")
+	download_path="$tmp_dir/$platform-$filename"
+	curl -sL "$url" -o "$download_path"
+
+	size=$(stat -f%z "$download_path" 2>/dev/null || stat -c%s "$download_path")
+	sha256=$(sha256sum "$download_path" 2>/dev/null | cut -d' ' -f1 || shasum -a 256 "$download_path" | cut -d' ' -f1)
+
+	echo "    Size: $size, SHA256: $sha256"
+
+	new_path="$current_path"
+	if [[ -n "$format" ]]; then
+		listing_file="$tmp_dir/$platform-listing.txt"
+		case "$format" in
+			tar.gz|tgz|tar.xz|tar.bz2|tar|tar.zst)
+				tar -tf "$download_path" > "$listing_file"
+				;;
+			zip)
+				unzip -l "$download_path" | awk '/----/ {p=1; next} p && !/----/ && NF > 3 {print $NF}' > "$listing_file"
+				;;
+			gz|xz|bz2|zst)
+				# Single compressed file. Path is usually not needed or is the filename minus extension.
+				# But DotSlash usually uses the 'path' as the filename to extract into.
+				if [[ -z "$new_path" ]]; then
+					new_path="$name"
+				fi
+				echo "$new_path" > "$listing_file"
+				;;
+			*)
+				echo "    Warning: Unsupported format $format for path verification."
+				;;
+		esac
+
+		if [[ -f "$listing_file" ]] && [[ "$format" != "gz" && "$format" != "xz" && "$format" != "bz2" && "$format" != "zst" ]]; then
+			if [[ -n "$current_path" ]] && grep -q "^$current_path$" "$listing_file"; then
+				echo "    Path '$current_path' verified."
+			else
+				echo "    Current path '$current_path' not found or empty. Searching for '$name'..."
+				# Try to find a file that exactly matches $name or ends with /$name
+				discovered_path=$(grep -E "(^|/)$name$" "$listing_file" | head -n 1 || true)
+				if [[ -n "$discovered_path" ]]; then
+					echo "    Discovered path: $discovered_path"
+					new_path="$discovered_path"
+				else
+					echo "    Warning: Could not discover path for $name in archive."
+				fi
+			fi
+		fi
+	else
+		# Not an archive, path should usually be the basename of the URL or what's already there
+		if [[ -z "$new_path" ]]; then
+			new_path=$(basename "$url")
+		fi
+	fi
+
+	# Update the platform object in the JSON
+	new_json=$(echo "$new_json" | jq ".platforms[\"$platform\"].size = $size | .platforms[\"$platform\"].digest = \"$sha256\" | .platforms[\"$platform\"].hash = \"sha256\" | .platforms[\"$platform\"].path = \"$new_path\"")
+done
+
+# Write back to file
+(echo "#!/usr/bin/env dotslash"; echo; echo "$new_json" | jq .) > "$input_file.tmp"
+mv "$input_file.tmp" "$input_file"
+chmod +x "$input_file"
+
+echo "Done. Updated $input_file"
+
+if command -v dotslash >/dev/null 2>&1; then
+	echo "Validating with dotslash -- parse..."
+	dotslash -- parse "$input_file"
+fi
