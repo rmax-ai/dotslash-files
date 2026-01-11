@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=hetznercloud/cli TAG=v1.59.0",
+  "name": "hcloud",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 6437245,
+      "hash": "sha256",
+      "digest": "7c3fdae7a3252b57524ddfb8f25019d9a1b99b37f76f58320417cd80ecd30ca6",
+      "format": "tar.gz",
+      "path": "hcloud",
+      "providers": [
+        {
+          "url": "https://github.com/hetznercloud/cli/releases/download/v1.59.0/hcloud-darwin-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "hetznercloud/cli",
+          "tag": "v1.59.0",
+          "name": "hcloud-darwin-arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 7072728,
+      "hash": "sha256",
+      "digest": "e23cfa3e9b1860a59d45bc2c62f4b722666e658044717b9de2825617bb6db6cc",
+      "format": "tar.gz",
+      "path": "hcloud",
+      "providers": [
+        {
+          "url": "https://github.com/hetznercloud/cli/releases/download/v1.59.0/hcloud-darwin-amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "hetznercloud/cli",
+          "tag": "v1.59.0",
+          "name": "hcloud-darwin-amd64.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 6173555,
+      "hash": "sha256",
+      "digest": "03db6ac185c8a161741a338cb970dbda600602933477fb94c35411b15b4a9110",
+      "format": "tar.gz",
+      "path": "hcloud",
+      "providers": [
+        {
+          "url": "https://github.com/hetznercloud/cli/releases/download/v1.59.0/hcloud-linux-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "hetznercloud/cli",
+          "tag": "v1.59.0",
+          "name": "hcloud-linux-arm64.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 6798841,
+      "hash": "sha256",
+      "digest": "d34da54c842a7f7357094f232957543cbe3277601776da41fc0efb2cb3a5710b",
+      "format": "tar.gz",
+      "path": "hcloud",
+      "providers": [
+        {
+          "url": "https://github.com/hetznercloud/cli/releases/download/v1.59.0/hcloud-linux-amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "hetznercloud/cli",
+          "tag": "v1.59.0",
+          "name": "hcloud-linux-amd64.tar.gz"
+        }
+      ]
+    }
+  }
+}
