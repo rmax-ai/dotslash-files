@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=j178/prek TAG=v0.2.27",
+  "name": "prek",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 4438569,
+      "hash": "sha256",
+      "digest": "ba36202685c08fa163300d105b73fb205d7b8f66f1726afff7ab3e5104565ac5",
+      "format": "tar.gz",
+      "path": "prek-aarch64-apple-darwin/prek",
+      "providers": [
+        {
+          "url": "https://github.com/j178/prek/releases/download/v0.2.27/prek-aarch64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "j178/prek",
+          "tag": "v0.2.27",
+          "name": "prek-aarch64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 4772790,
+      "hash": "sha256",
+      "digest": "d6634a219cae91e870d34db2685512948e9104255a4f5f71f284398b054929a8",
+      "format": "tar.gz",
+      "path": "prek",
+      "providers": [
+        {
+          "url": "https://github.com/j178/prek/releases/download/v0.2.27/prek-x86_64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "j178/prek",
+          "tag": "v0.2.27",
+          "name": "prek-x86_64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 4638474,
+      "hash": "sha256",
+      "digest": "a5a77f51550237b7889ffc05de13a73e5611c6f3c3c9248bfedf91e181d49732",
+      "format": "tar.gz",
+      "path": "prek",
+      "providers": [
+        {
+          "url": "https://github.com/j178/prek/releases/download/v0.2.27/prek-aarch64-unknown-linux-gnu.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "j178/prek",
+          "tag": "v0.2.27",
+          "name": "prek-aarch64-unknown-linux-gnu.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 4961116,
+      "hash": "sha256",
+      "digest": "53e6f15a3178e5413bc68eda4e089d8f69319e2af9591823e22f6fed1024a93d",
+      "format": "tar.gz",
+      "path": "prek",
+      "providers": [
+        {
+          "url": "https://github.com/j178/prek/releases/download/v0.2.27/prek-x86_64-unknown-linux-gnu.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "j178/prek",
+          "tag": "v0.2.27",
+          "name": "prek-x86_64-unknown-linux-gnu.tar.gz"
+        }
+      ]
+    }
+  }
+}
