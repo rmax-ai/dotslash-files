@@ -1,0 +1,3 @@
+- dotslash-doctor
+- automation to link tool-latest to latest version available
+- agents to add new dotfiles
