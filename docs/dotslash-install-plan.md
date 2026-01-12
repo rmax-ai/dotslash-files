@@ -2,6 +2,8 @@
 
 Executive summary
 -----------------
+
+Status: Ready for implementation. This document defines the desired behavior, UX, and acceptance criteria for scripts/dotslash-install and is ready for implementation.
 Provide a small, safe, user-friendly installer called `scripts/dotslash-install` that allows users to install .dotslash manifests from this repository's `bin/` directory into a local bin directory (default: $DOTSLASH_INSTALL_DIR (defaults to $XDG_BIN_HOME if set, otherwise $HOME/.dotslash/bin)). The installer will prefer local, opinionated behavior (no network operations), offer fast exact-match installs, and fall back to an interactive fuzzy selector when needed. It should be safe by default, non-destructive, and scriptable for CI or advanced users.
 
 Motivation & goals
@@ -102,6 +104,60 @@ Run 'fzf' to verify the installation.
 Notes:
 - Exit codes follow the documented mapping (0 success, 1 usage error, 2 candidate not found, 3 missing dependency, 4 user aborted).
 
+Failure & error examples (example outputs)
+-----------------------------------------
+Missing dependency (dotslash not found): exit code 3
+
+$ scripts/dotslash-install fzf
+Error: 'dotslash' not found on PATH.
+Hint: Install the 'dotslash' runner or use --force-no-dotslash in constrained environments.
+Exit status: 3
+
+Path collision (existing command on PATH):
+
+$ scripts/dotslash-install ripgrep
+Warning: a command named 'rg' exists on PATH at /usr/local/bin/rg
+Install 'ripgrep' anyway? (y/N)  [use --yes to accept]
+If user aborts: exit status 4
+
+No candidates found (exit code 2):
+
+$ scripts/dotslash-install unknown-tool
+No manifests in 'bin/' match 'unknown-tool'. Try a different query; see top suggestions:
+  - fzf
+  - ripgrep
+Exit status: 2
+
+Append PATH success example:
+If $TARGET not on PATH and --append-path is used:
+Wrote 'export PATH="$TARGET:$PATH"' to ~/.zshrc (# added by dotslash-install)
+
+Dry-run example (no files written):
+
+$ scripts/dotslash-install --dry-run demo-tool
+Would install "demo-tool" to $TARGET
+- manifest: would copy bin/demo-tool.dotslash -> $TARGET/demo-tool.dotslash
+- wrapper: would create $TARGET/demo-tool
+No files were written.
+
+Verbose output example:
+
+$ scripts/dotslash-install --dry-run --verbose demo-tool
+Resolving TARGET...
+TARGET resolved to: $TARGET
+Searching bin/ for manifests...
+Found candidate: bin/demo-tool.dotslash (name: demo-tool)
+Target directory does not exist; would run: mkdir -p "$TARGET"
+Would copy: bin/demo-tool.dotslash -> $TARGET/demo-tool.dotslash
+Would create wrapper: $TARGET/demo-tool
+No files were written.
+
+Smoke check:
+After a successful install, verify by running:
+$ demo-tool --version
+or
+$ $TARGET/demo-tool --version
+
 Design & implementation details
 -------------------------------
 Repo root discovery
@@ -126,7 +182,10 @@ Example POSIX implementation:
 #   TARGET="$HOME/.dotslash/bin"
 # fi
 
-- The script should ensure TARGET exists (mkdir -p) and is writable; if creation fails, print a clear error and exit with a non-zero status.
+- The script should ensure TARGET exists (mkdir -p) and is writable; if creation fails, print a clear error and exit with a non-zero status. Example error:
+
+Error: could not create target directory '$TARGET': Permission denied
+Exit status: >10
 
 Manifest discovery & parsing
 - Fast path: prefer exact match against the manifest `"name"` field.
@@ -157,10 +216,22 @@ exec dotslash "$DIR/<basename-of-manifest>.dotslash" "$@"
 - `--no-wrapper` skips wrapper creation; this is useful when a user prefers to call `dotslash` directly.
 
 PATH detection & shell integration
-- Check whether `$TARGET` is exactly one of the path entries. Use `tr ':' '\n'` and compare.
+- Check whether `$TARGET` is exactly one of the path entries. Use `tr ':' '\n'` and compare. Example:
+
+# simple PATH detection snippet (POSIX)
+# if echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
+#   echo "on PATH"
+# else
+#   echo "not on PATH"
+# fi
+
 - Detect the user's shell via `$SHELL` and recommend an rc file to update (e.g., zsh -> ~/.zshrc, bash -> ~/.bashrc). For macOS, prefer ~/.bash_profile if present.
 - Only append to rc files when `--append-path` is explicitly passed and the user confirms.
-- Use an idempotent append that checks if the export line already exists before writing.
+- Use an idempotent append that checks if the export line already exists before writing. Example idempotent append:
+
+# if ! grep -Fq "# added by dotslash-install" "$RC"; then
+#   printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:$PATH\"\n" >> "$RC"
+# fi
 
 Errors, exit codes & logging
 - Exit codes:
@@ -172,11 +243,17 @@ Errors, exit codes & logging
   >10: internal unexpected errors
 - Provide `--dry-run` and `--verbose` to aid testing and debugging.
 
-Edge cases & safety
-- If no candidates found, show helpful suggestions: top N manifests or guidance on refining the query.
-- If a manifest lacks a `name` field or is otherwise malformed, skip it and warn.
-- If a command of the same name exists on PATH, warn and require explicit confirmation to proceed.
-- Do not follow or resolve symlinks when reading manifests in the repo; operate on repository files only.
+Edge cases & safety (detailed policies)
+- No candidates found: show helpful suggestions (top N manifests) and exit with code 2. Provide guidance on refining queries and suggest closest matches.
+- Duplicate names: if multiple manifests share the same `.name` value, treat them as distinct candidates and present an interactive selection (or numeric fallback). Do not auto-select; require explicit confirmation.
+- Malformed manifests: skip manifests that cannot be parsed; warn summarizing the file path and reason. Do not fail the entire operation unless all candidates are malformed.
+- Missing `name` field: treat the file's basename (without extension) as the tool name for filename-based matching, but prefer `.name` when present.
+- PATH collisions: if a command of the same name exists on PATH, warn and require explicit confirmation unless `--yes` or `--force` is passed. Use `command -v` to detect collisions.
+- Existing target files: when a manifest or wrapper already exists in `$TARGET`, prompt to overwrite unless `--force` is provided. In non-interactive mode (`--yes`), only proceed to overwrite if `--force` is also passed.
+- File system / permission errors: if the target directory cannot be created or is not writable, print a clear error (example shown in Failure & error examples) and exit with a non-zero code (>10).
+- Symlinks: do not follow or resolve symlinks when reading manifests in the repo; operate on repository files only. When installing, write real files (not symlinks) to avoid cross-filesystem and Windows symlink limitations.
+- RC file write failure: if `--append-path` is requested but the RC can't be modified due to permissions, print the intended export line and suggest manual addition; exit with a non-zero status.
+- Cross-platform considerations: Windows/PowerShell support is out-of-scope for the first release; document limitations and accept future PRs to add support.
 
 Testing strategy
 ----------------
@@ -201,10 +278,11 @@ install-tests:
 
 Acceptance criteria
 -------------------
-- Script implements exact-match install and wrapper creation.
-- Interactive fuzzy selection works when `fzf` is installed; graceful fallback works without it.
-- Tests covering primary flows exist and pass in CI.
+- Script implements exact-match install and wrapper creation and includes a `--no-wrapper` option.
+- Interactive fuzzy selection works when `fzf` is installed; graceful numeric fallback works without it and `--no-fzf` forces non-fzf behavior.
+- Tests covering primary flows exist and pass locally and in CI via a Makefile target (install-tests or integrated into shim-tests).
 - Script documents usage and flags in README or man-style help output.
+- Documentation includes example output for common failure modes and success cases, and the doc is marked 'Ready for implementation'.
 
 Security & privacy considerations
 --------------------------------
@@ -257,13 +335,50 @@ Testing notes (expanded)
 - `tests/dotslash_install_test.sh` should be a POSIX shell script that:
   - Uses `mktemp -d` for isolated temp dirs and cleans up on exit.
   - Exports `DOTSLASH_INSTALL_DIR` to a temp dir for the install target.
-  - Creates a fake `dotslash` shim in PATH when testing wrapper execution.
-  - Tests should assert:
-    - Exact-match installs create manifest + wrapper and wrapper execs `dotslash` with correct args.
-    - Fuzzy selection and numeric fallback work as intended.
-    - Missing `dotslash` behavior exits non-zero and prints actionable hints (unless `--force-no-dotslash`).
-    - PATH instructions are printed when target not on PATH; `--append-path` modifies a temp rc file.
-    - `--force` overwrites existing installation; `--dry-run` performs no writes.
+  - Creates a fake `dotslash` shim in PATH when testing wrapper execution. For example:
+
+# mkdir -p "$TMP/bin" && cat > "$TMP/bin/dotslash" <<'EOF'
+# #!/usr/bin/env bash
+# echo "DOTSLASH SHIM: "$@""
+# EOF
+# chmod +x "$TMP/bin/dotslash" && export PATH="$TMP/bin:$PATH"
+
+  - Tests should assert (concrete cases):
+    1) Exact match success
+       - create a sample manifest with name "demo-tool" in a temp repo bin/
+       - run: scripts/dotslash-install demo-tool
+       - assert: $DOTSLASH_INSTALL_DIR/demo-tool.dotslash exists and $DOTSLASH_INSTALL_DIR/demo-tool wrapper exists and is executable
+       - assert: invoking the wrapper execs the fake dotslash shim with the manifest path as the first argument
+
+    2) No candidates
+       - run: scripts/dotslash-install unknown-tool
+       - assert: exit code 2 and helpful suggestions printed
+
+    3) Missing dotslash
+       - ensure PATH does not contain dotslash
+       - run: scripts/dotslash-install demo-tool
+       - assert: exit code 3 and actionable hint printed
+
+    4) Path collision
+       - ensure a conflicting command exists on PATH (create fake /tmp/bin/rg)
+       - run: scripts/dotslash-install ripgrep and simulate interactive decline
+       - assert: exit code 4
+
+    5) --append-path modifies rc file
+       - set TARGET to a temp dir not on PATH
+       - provide a temp rc file path via env (e.g., DOTSLASH_RC)
+       - run: scripts/dotslash-install --append-path demo-tool
+       - assert: rc file contains the appended export line with the marker comment
+
+    6) --force overwrites
+       - create existing manifest and wrapper at target
+       - run: scripts/dotslash-install --force demo-tool
+       - assert: files are replaced
+
+    7) --dry-run performs no writes
+       - run: scripts/dotslash-install --dry-run demo-tool
+       - assert: no files are written and output shows intended actions
+
 - Add `install-tests` Makefile target that runs the script and integrates with `make shim-tests` when appropriate (see minimal example below).
 
 Minimal Makefile target suggestion:
@@ -271,23 +386,32 @@ Minimal Makefile target suggestion:
 install-tests:
 	./tests/dotslash_install_test.sh
 
-- Ensure tests are resilient when `fzf` or `jq` are absent; skip or simulate these tools where needed.
+- Ensure tests are resilient when `fzf` or `jq` are absent; skip or simulate these tools where needed. Use `command -v fzf` checks and set `--no-fzf` for deterministic tests when needed.
 
 Decisions
 ---------
 - Install dir resolution: DOTSLASH_INSTALL_DIR > XDG_BIN_HOME > XDG_DATA_HOME/dotslash/bin > $HOME/.dotslash/bin (see the "Default install directory resolution" section and example pseudocode).
 - Verification of 'dotslash' presence: the script will verify that `dotslash` exists on PATH by default and exit with an actionable hint; use `--force-no-dotslash` to skip this check in constrained test environments.
 - Interactive defaults: `fzf` is optional. When available it provides an enhanced interactive selection; otherwise the script falls back to a numeric prompt. Respect `--no-fzf` to force the fallback.
-- Batch installs and strict manifest validation: deferred. Initial implementation will focus on single-manifest installs and will warn and skip malformed manifests rather than failing hard.
+- Batch installs and strict manifest validation: deferred. Initial implementation will focus on single-manifest installs and will warn and skip malformed manifests rather than failing hard. Future iterations may add transactional multi-install support and stricter validation modes.
 
-Open questions
---------------
-- Are there additional platform-specific edge cases to handle beyond the macOS `~/.bash_profile` preference? Defer to implementation and testing for any platform-specific tweaks.
-- Should we provide a convenience command for installing multiple manifests in one invocation (e.g., `dotslash-install fzf rg`) or add that as an opt-in enhancement later? (deferred)
+Open questions & decisions
+--------------------------
+- Platform-specific edge cases: For the initial release we will target POSIX-like systems (Linux and macOS). macOS will prefer ~/.bash_profile for bash shells when appropriate. Full Windows (PowerShell) support is out-of-scope for the first release and may be considered later.
+- Batch installs: Deferred. The initial implementation will focus on single-manifest installs only. Adding support for installing multiple manifests in one invocation (and transactional behavior) is a candidate for a follow-up enhancement.
+- Default install dir policy: Decision — honor DOTSLASH_INSTALL_DIR when set; otherwise prefer XDG_BIN_HOME if set; otherwise XDG_DATA_HOME/dotslash/bin if set; otherwise fallback to $HOME/.dotslash/bin. This balances explicit user control with XDG conventions.
+- RC file modification: The script will never modify shell rc files without explicit opt-in via --append-path and explicit user confirmation. Any append will be idempotent and annotated with a clear marker comment.
+
+PR checklist
+------------
+- [ ] Add scripts/dotslash-install scaffold with usage and flags implemented and executable.
+- [ ] Add tests/dotslash_install_test.sh covering exact-match, selection fallback, missing-dotslash behavior, PATH append behavior, overwrite/force, and dry-run.
+- [ ] Add Makefile target `install-tests` and integrate with `make shim-tests` where appropriate.
+- [ ] Ensure tests are resilient when optional tools (fzf, jq) are missing; add simulation helpers where needed.
+- [ ] Update README.md with a short usage blurb and link to this proposal.
+- [ ] Add a draft PR and request at least one reviewer; ensure CI runs and tests pass.
 
 Next steps
 ----------
-- Review this proposal and converge on CLI flags and default behavior.
-- I can implement the scaffold (argument parsing + exact-match install) and tests, open a draft PR for review, and iterate on the interactive pieces (`fzf`/preview) once basic tests pass.
-
-If you'd like, I will scaffold the script and tests now and open a draft PR for feedback. Specify whether you prefer the default install dir to be $DOTSLASH_INSTALL_DIR (defaults to $XDG_BIN_HOME if set, otherwise $HOME/.dotslash/bin), or want XDG-style defaults by default.
+- Review this proposal and converge on CLI flags and default behavior. I can implement the scaffold (argument parsing + exact-match install) and tests, open a draft PR for review, and iterate on the interactive pieces (`fzf`/preview) once basic tests pass.
+- Indicate whether you prefer XDG-style defaults or the documented precedence (DOTSLASH_INSTALL_DIR > XDG_BIN_HOME > XDG_DATA_HOME/dotslash/bin > $HOME/.dotslash/bin).

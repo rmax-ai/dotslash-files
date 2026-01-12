@@ -1,0 +1,319 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROG_NAME="$(basename "$0")"
+
+# Defaults
+DOTSLASH_INSTALL_DIR_DEFAULT=""
+TARGET=""
+YES=false
+FORCE=false
+FORCE_NO_DOTSLASH=false
+NO_FZF=false
+NO_WRAPPER=false
+APPEND_PATH=false
+DRY_RUN=false
+VERBOSE=false
+
+usage() {
+  cat <<EOF
+Usage: $PROG_NAME [OPTIONS] <query>
+
+Options:
+  -t, --target DIR       Install to DIR (default: DOTSLASH_INSTALL_DIR > XDG_BIN_HOME > XDG_DATA_HOME/dotslash/bin > \$HOME/.dotslash/bin)
+  -y, --yes              Accept all prompts (non-interactive)
+  -f, --force            Overwrite existing installations
+  --force-no-dotslash    Skip verifying that 'dotslash' is present in PATH
+  -n, --no-fzf           Disable fzf and use numbered selection fallback
+  --no-wrapper           Install only the manifest (do not create the executable wrapper)
+  --append-path          Append export PATH line to the detected shell rc (explicit opt-in)
+  --dry-run              Show what would happen and exit
+  --verbose              Print diagnostic messages during execution
+  -h, --help             Show usage
+EOF
+}
+
+logv() {
+  if [ "$VERBOSE" = true ]; then
+    echo "$@"
+  fi
+}
+
+# parse args (getopt)
+ARGS=$(getopt -o t:yfnh --long target:,yes,force,force-no-dotslash,no-fzf,no-wrapper,append-path,dry-run,verbose,help -n "$PROG_NAME" -- "$@")
+if [ $? -ne 0 ]; then
+  usage
+  exit 1
+fi
+eval set -- "$ARGS"
+while true; do
+  case "$1" in
+    -t|--target)
+      TARGET="$2"; shift 2;;
+    -y|--yes)
+      YES=true; shift;;
+    -f|--force)
+      FORCE=true; shift;;
+    --force-no-dotslash)
+      FORCE_NO_DOTSLASH=true; shift;;
+    -n|--no-fzf)
+      NO_FZF=true; shift;;
+    --no-wrapper)
+      NO_WRAPPER=true; shift;;
+    --append-path)
+      APPEND_PATH=true; shift;;
+    --dry-run)
+      DRY_RUN=true; shift;;
+    --verbose)
+      VERBOSE=true; shift;;
+    -h|--help)
+      usage; exit 0;;
+    --)
+      shift; break;;
+    *)
+      echo "Invalid option: $1"; usage; exit 1;;
+  esac
+done
+
+if [ $# -lt 1 ]; then
+  echo "Error: missing query"
+  usage
+  exit 1
+fi
+
+QUERY="$1"
+
+# Verify 'dotslash' presence unless skipped
+if [ "$FORCE_NO_DOTSLASH" = false ]; then
+  if ! command -v dotslash >/dev/null 2>&1; then
+    echo "Error: 'dotslash' not found on PATH."
+    echo "Hint: install the 'dotslash' runner or use --force-no-dotslash in constrained environments."
+    exit 3
+  fi
+fi
+
+# Repo root detection
+REPO_ROOT=""
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+else
+  # fallback: script dir parent
+  REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
+fi
+logv "Repo root: $REPO_ROOT"
+
+# Resolve target directory
+resolve_target() {
+  if [ -n "${TARGET:-}" ]; then
+    echo "$TARGET"; return 0
+  fi
+  if [ -n "${DOTSLASH_INSTALL_DIR:-}" ]; then
+    echo "$DOTSLASH_INSTALL_DIR"; return 0
+  fi
+  if [ -n "${XDG_BIN_HOME:-}" ]; then
+    echo "$XDG_BIN_HOME"; return 0
+  fi
+  if [ -n "${XDG_DATA_HOME:-}" ]; then
+    echo "${XDG_DATA_HOME}/dotslash/bin"; return 0
+  fi
+  echo "$HOME/.dotslash/bin"
+}
+
+TARGET="$(resolve_target)"
+logv "TARGET resolved to: $TARGET"
+
+# Manifest discovery
+BIN_DIR="$REPO_ROOT/bin"
+if [ ! -d "$BIN_DIR" ]; then
+  echo "Error: bin/ directory not found in repo root: $REPO_ROOT"
+  exit 2
+fi
+
+# Build candidate list: arrays for names and paths
+declare -a CAND_NAMES
+declare -a CAND_PATHS
+
+for f in "$BIN_DIR"/*.dotslash; do
+  [ -e "$f" ] || continue
+  name=""
+  if command -v jq >/dev/null 2>&1; then
+    name=$(jq -r '.name // empty' "$f" 2>/dev/null || true)
+  fi
+  if [ -z "$name" ]; then
+    # conservative grep fallback to extract "name": "value"
+    if grep -q '"name"' "$f" 2>/dev/null; then
+      name=$(sed -n 's/.*"name"\s*:\s*\"\([^\"]*\)\".*/\1/p' "$f" | head -n1 || true)
+    fi
+  fi
+  if [ -z "$name" ]; then
+    name="$(basename "$f" .dotslash)"
+  fi
+  CAND_NAMES+=("$name")
+  CAND_PATHS+=("$f")
+done
+
+# Find matches: exact by name
+matched_index=-1
+for i in "${!CAND_NAMES[@]}"; do
+  if [ "${CAND_NAMES[$i]}" = "$QUERY" ]; then
+    matched_index=$i
+    break
+  fi
+done
+
+# If no exact match, try substring match on filename
+declare -a MATCH_INDICES
+if [ $matched_index -ge 0 ]; then
+  MATCH_INDICES+=($matched_index)
+else
+  for i in "${!CAND_PATHS[@]}"; do
+    fname="$(basename "${CAND_PATHS[$i]}")"
+    if echo "$fname" | grep -qi "$QUERY"; then
+      MATCH_INDICES+=($i)
+    fi
+  done
+fi
+
+if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
+  echo "No manifests in 'bin/' match '$QUERY'. Try a different query; see top suggestions:" 
+  # suggest top 5
+  for i in $(seq 0 4); do
+    if [ $i -ge ${#CAND_NAMES[@]} ]; then break; fi
+    echo "  - ${CAND_NAMES[$i]}"
+  done
+  exit 2
+fi
+
+# If multiple candidates, for now, if only one proceed, otherwise list and ask user to pick (non-fzf basic)
+chosen_index=${MATCH_INDICES[0]}
+if [ ${#MATCH_INDICES[@]} -gt 1 ]; then
+  echo "Multiple candidates found matching '$QUERY':"
+  for idx in "${MATCH_INDICES[@]}"; do
+    echo "  [$idx] ${CAND_NAMES[$idx]} - ${CAND_PATHS[$idx]}"
+  done
+  # If non-interactive, abort
+  if [ "$YES" = true ]; then
+    echo "Multiple candidates; non-interactive and --yes given: aborting."
+    exit 4
+  fi
+  read -rp "Select index: " sel
+  if ! echo "$sel" | grep -qE '^[0-9]+$'; then
+    echo "Invalid selection"; exit 1
+  fi
+  chosen_index=$sel
+fi
+
+CAND_NAME="${CAND_NAMES[$chosen_index]}"
+CAND_PATH="${CAND_PATHS[$chosen_index]}"
+BASE_NAME="$(basename "$CAND_PATH" .dotslash)"
+
+# Show manifest summary and confirm
+echo "Found candidate: $CAND_PATH (name: $CAND_NAME)"
+if [ "$DRY_RUN" = true ]; then
+  echo "Would install \"$CAND_NAME\" to $TARGET"
+  echo "- manifest: $TARGET/$BASE_NAME.dotslash"
+  if [ "$NO_WRAPPER" = false ]; then
+    echo "- wrapper:  $TARGET/$BASE_NAME"
+  fi
+  echo "No files were written."
+  exit 0
+fi
+
+# Check PATH collision
+if command -v "$BASE_NAME" >/dev/null 2>&1; then
+  existing_loc=$(command -v "$BASE_NAME")
+  echo "Warning: a command named '$BASE_NAME' exists on PATH at $existing_loc"
+  if [ "$YES" = true ]; then
+    if [ "$FORCE" = false ]; then
+      echo "Non-interactive and --yes provided but --force not provided; aborting to avoid overwriting PATH command."
+      exit 4
+    fi
+  else
+    read -rp "Install '$BASE_NAME' anyway? (y/N) " yn
+    case "$yn" in
+      [Yy]*) ;;
+      *) echo "Aborted"; exit 4;;
+    esac
+  fi
+fi
+
+# ensure TARGET exists and is writable
+if [ ! -d "$TARGET" ]; then
+  if [ "$DRY_RUN" = true ]; then
+    echo "Target directory does not exist; would run: mkdir -p \"$TARGET\""
+  else
+    mkdir -p "$TARGET" || { echo "Error: could not create target directory '$TARGET'"; exit 11; }
+  fi
+fi
+
+# Copy manifest
+target_manifest="$TARGET/$BASE_NAME.dotslash"
+if [ -e "$target_manifest" ]; then
+  if [ "$FORCE" = true ]; then
+    logv "Overwriting existing manifest: $target_manifest"
+  else
+    if [ "$YES" = true ]; then
+      echo "Non-interactive mode (--yes) without --force; existing files will not be overwritten; aborting."
+      exit 4
+    fi
+    read -rp "Target manifest exists at $target_manifest. Overwrite? (y/N) " yn
+    case "$yn" in
+      [Yy]*) ;;
+      *) echo "Aborted"; exit 4;;
+    esac
+  fi
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  echo "Would copy: $CAND_PATH -> $target_manifest"
+else
+  cp -p "$CAND_PATH" "$target_manifest" || { echo "Error: could not copy manifest"; exit 12; }
+  chmod +x "$target_manifest" || true
+fi
+
+# Create wrapper unless --no-wrapper
+if [ "$NO_WRAPPER" = false ]; then
+  wrapper="$TARGET/$BASE_NAME"
+  if [ -e "$wrapper" ]; then
+    if [ "$FORCE" = true ]; then
+      logv "Overwriting existing wrapper: $wrapper"
+    else
+      if [ "$YES" = true ]; then
+        echo "Non-interactive mode (--yes) without --force; existing files will not be overwritten; aborting."
+        exit 4
+      fi
+      read -rp "Target wrapper exists at $wrapper. Overwrite? (y/N) " yn
+      case "$yn" in
+        [Yy]*) ;;
+        *) echo "Aborted"; exit 4;;
+      esac
+    fi
+  fi
+
+  if [ "$DRY_RUN" = true ]; then
+    echo "Would create wrapper: $wrapper"
+  else
+    cat > "$wrapper" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+DIR="\$(cd "\$(dirname "\${0}")" >/dev/null 2>&1 && pwd)"
+exec dotslash "\$DIR/$BASE_NAME.dotslash" "\$@"
+EOF
+    chmod 0755 "$wrapper"
+  fi
+fi
+
+# Success message
+echo "Installed \"$CAND_NAME\" to $TARGET"
+echo "- manifest: $target_manifest"
+if [ "$NO_WRAPPER" = false ]; then
+  echo "- wrapper:  $wrapper"
+fi
+
+# PATH hint
+if ! echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
+  echo "\nIf $TARGET is not on your PATH, add it:" 
+  echo "  export PATH=\"$TARGET:\$PATH\""
+fi
+
+exit 0
