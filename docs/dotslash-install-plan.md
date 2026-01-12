@@ -69,6 +69,39 @@ Examples:
 - scripts/dotslash-install --no-wrapper --dry-run helm
 - scripts/dotslash-install --dry-run --target "$HOME/.local/bin" --verbose ripgrep
 
+Help & sample output
+--------------------
+Help output (example):
+
+$ scripts/dotslash-install -h
+Usage: scripts/dotslash-install [OPTIONS] <query>
+
+Options:
+  -t, --target DIR       Install to DIR (default: $DOTSLASH_INSTALL_DIR — resolves to $XDG_BIN_HOME if set, otherwise $HOME/.dotslash/bin)
+  -y, --yes              Accept all prompts (non-interactive)
+  -f, --force            Overwrite existing installations
+  --force-no-dotslash    Skip verifying that 'dotslash' is present in PATH
+  -n, --no-fzf           Disable fzf and use numbered selection fallback
+  --no-wrapper           Install only the manifest (do not create the executable wrapper)
+  --append-path          Append export PATH line to the detected shell rc (explicit opt-in)
+  --dry-run              Show what would happen and exit
+  --verbose              Print diagnostic messages during execution
+  -h, --help             Show usage
+
+Success (example):
+
+Installed "fzf" to $TARGET
+- manifest: $TARGET/fzf.dotslash
+- wrapper:  $TARGET/fzf
+
+If $TARGET is not on your PATH, add it:
+  export PATH="$TARGET:$PATH"
+
+Run 'fzf' to verify the installation.
+
+Notes:
+- Exit codes follow the documented mapping (0 success, 1 usage error, 2 candidate not found, 3 missing dependency, 4 user aborted).
+
 Design & implementation details
 -------------------------------
 Repo root discovery
