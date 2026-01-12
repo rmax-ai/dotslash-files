@@ -361,7 +361,7 @@ if ! echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
       else
         # Append idempotently
         if ! grep -Fq "# added by dotslash-install" "$RC" 2>/dev/null; then
-          printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\"\n" >> "$RC" || { echo "Warning: failed to write to $RC"; fi
+          printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\"\n" >> "$RC" || { echo "Warning: failed to write to $RC"; }
           echo "Wrote export line to $RC (# added by dotslash-install)"
         else
           echo "$RC already appears to contain an exported PATH entry from dotslash-install; skipping append."
