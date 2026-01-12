@@ -342,6 +342,33 @@ fi
 if ! echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
   echo "\nIf $TARGET is not on your PATH, add it:" 
   echo "  export PATH=\"$TARGET:\$PATH\""
+  if [ "$APPEND_PATH" = true ]; then
+    # Detect shell and candidate rc file
+    RC=""
+    case "$(basename "${SHELL:-/bin/sh}")" in
+      zsh) RC="$HOME/.zshrc";;
+      bash) RC="$HOME/.bashrc";;
+      *) RC="$HOME/.profile";;
+    esac
+    echo "\n--append-path requested: would append export line to $RC"
+    if [ "$DRY_RUN" = true ]; then
+      echo "Would write to $RC: \n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\""
+    else
+      if [ ! -w "$RC" ] && [ -e "$RC" ]; then
+        echo "Warning: $RC is not writable. Please add the following line to your shell rc file:" 
+        echo "# added by dotslash-install"
+        echo "export PATH=\"$TARGET:\$PATH\""
+      else
+        # Append idempotently
+        if ! grep -Fq "# added by dotslash-install" "$RC" 2>/dev/null; then
+          printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\"\n" >> "$RC" || { echo "Warning: failed to write to $RC"; fi
+          echo "Wrote export line to $RC (# added by dotslash-install)"
+        else
+          echo "$RC already appears to contain an exported PATH entry from dotslash-install; skipping append."
+        fi
+      fi
+    fi
+  fi
 fi
 
 exit 0
