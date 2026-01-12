@@ -154,7 +154,11 @@ for f in "$BIN_DIR"/*.dotslash; do
   name=""
   if command -v jq >/dev/null 2>&1; then
     # If jq is available, strip a leading shebang line and validate the remaining JSON
-    content="$(sed '1{/^#!/d}' "$f")"
+    if head -n1 "$f" | grep -q '^#!'; then
+      content=$(tail -n +2 "$f" )
+    else
+      content=$(cat "$f")
+    fi
     if ! printf '%s' "$content" | jq -e . >/dev/null 2>&1; then
       echo "Warning: skipping malformed manifest $f"; continue
     fi
