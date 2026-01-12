@@ -97,19 +97,6 @@ echo "Test 2 passed: missing dotslash behavior"
 # Restore PATH for subsequent tests
 PATH="$ORIG_PATH"
 
-echo "Test 2 passed: missing dotslash behavior"
-
-set +e
-(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
-STATUS=$?
-set -e
-if [ $STATUS -ne 3 ]; then
-  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"
-  exit 1
-fi
-
-echo "Test 2 passed: missing dotslash behavior"
-
 # Test 3: Dry-run does not write files
 export PATH="$FAKE_BIN:$PATH"
 rm -f "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"
