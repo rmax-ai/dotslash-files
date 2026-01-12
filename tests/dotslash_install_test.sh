@@ -176,5 +176,228 @@ fi
 
 echo "Test 4 passed: unknown candidate"
 
+# Test 6: Numeric selection fallback (no fzf)
+# Create two new manifests that match the same query
+cat >"$REPO_ROOT/bin/seltest-1.dotslash" <<'EOF'
+#!/usr/bin/env dotslash
+{
+  "name": "seltest-1",
+  "provider": { "http": "https://example.com/seltest-1.tar.gz" },
+  "run": { "cmd": ["seltest-1"] }
+}
+EOF
+chmod +x "$REPO_ROOT/bin/seltest-1.dotslash"
+cat >"$REPO_ROOT/bin/seltest-2.dotslash" <<'EOF'
+#!/usr/bin/env dotslash
+{
+  "name": "seltest-2",
+  "provider": { "http": "https://example.com/seltest-2.tar.gz" },
+  "run": { "cmd": ["seltest-2"] }
+}
+EOF
+chmod +x "$REPO_ROOT/bin/seltest-2.dotslash"
+
+# Compute the matching indices the same way the installer would and pick the index for seltest-2
+MATCH_IDX=""
+idx=0
+for f in "$REPO_ROOT/bin"/*.dotslash; do
+  name=""
+  if command -v jq >/dev/null 2>&1; then
+    name=$(jq -r '.name // empty' "$f" 2>/dev/null || true)
+  fi
+  if [ -z "$name" ]; then
+    if grep -q '"name"' "$f" 2>/dev/null; then
+      name=$(sed -n 's/.*"name"\s*:\s*\"\([^\"]*\)\".*/\1/p' "$f" | head -n1 || true)
+    fi
+  fi
+  if [ -z "$name" ]; then
+    name="$(basename "$f" .dotslash)"
+  fi
+  fname="$(basename "$f")"
+  if echo "$fname" | grep -qi "seltest"; then
+    if [ "$(basename "$f" .dotslash)" = "seltest-2" ]; then
+      MATCH_IDX="$idx"
+      break
+    fi
+  fi
+  idx=$((idx + 1))
+done
+
+if [ -z "$MATCH_IDX" ]; then
+  echo "Test setup failed: could not determine match index for seltest-2"
+  exit 1
+fi
+
+# Run installer and provide the numeric selection
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_sel"
+mkdir -p "$DOTSLASH_INSTALL_DIR"
+printf '%s
+' "$MATCH_IDX" | (cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" -n seltest)
+# verify seltest-2 was installed
+if [ ! -f "$DOTSLASH_INSTALL_DIR/seltest-2.dotslash" ] || [ ! -x "$DOTSLASH_INSTALL_DIR/seltest-2" ]; then
+  echo "Test failed: numeric selection did not install expected candidate"
+  exit 1
+fi
+
+echo "Test 6 passed: numeric selection fallback"
+
+# Test 7: --force overwrites existing files
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_force"
+mkdir -p "$DOTSLASH_INSTALL_DIR"
+# Create existing manifest and wrapper with sentinel content
+printf 'OLD' >"$DOTSLASH_INSTALL_DIR/demo-tool.dotslash"
+printf 'OLDWRAPPER' >"$DOTSLASH_INSTALL_DIR/demo-tool"
+chmod +x "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"
+# Run installer with --force
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --force demo-tool)
+# Verify files were overwritten (wrapper should contain exec dotslash)
+if ! grep -q "exec dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"; then
+  echo "Test failed: --force did not overwrite wrapper"
+  exit 1
+fi
+if ! grep -q "provider" "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash"; then
+  echo "Test failed: --force did not overwrite manifest"
+  exit 1
+fi
+
+echo "Test 7 passed: --force overwrites existing files"
+
+# Test 8: --yes does not overwrite existing files (non-destructive)
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_yes"
+mkdir -p "$DOTSLASH_INSTALL_DIR"
+# Create existing manifest and wrapper with sentinel content
+printf 'OLD' >"$DOTSLASH_INSTALL_DIR/demo-tool.dotslash"
+printf 'OLDWRAPPER' >"$DOTSLASH_INSTALL_DIR/demo-tool"
+chmod +x "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"
+# Run installer with --yes (should skip overwriting)
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --yes demo-tool)
+# Verify files were NOT overwritten
+if grep -q "exec dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"; then
+  echo "Test failed: --yes should not have overwritten wrapper"
+  exit 1
+fi
+if grep -q "provider" "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash"; then
+  echo "Test failed: --yes should not have overwritten manifest"
+  exit 1
+fi
+
+echo "Test 8 passed: --yes non-destructive"
+
+# Test 9: --force --yes overwrites
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_force_yes"
+mkdir -p "$DOTSLASH_INSTALL_DIR"
+printf 'OLD' >"$DOTSLASH_INSTALL_DIR/demo-tool.dotslash"
+printf 'OLDWRAPPER' >"$DOTSLASH_INSTALL_DIR/demo-tool"
+chmod +x "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --force --yes demo-tool)
+if ! grep -q "exec dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"; then
+  echo "Test failed: --force --yes did not overwrite wrapper"
+  exit 1
+fi
+
+echo "Test 9 passed: --force --yes overwrites"
+
+# Test 10: Path collision prompts and respects response
+# Create fake command on PATH with same name
+FAKE_COL_BIN="$TMPDIR/fakecol"
+mkdir -p "$FAKE_COL_BIN"
+cat >"$FAKE_COL_BIN/demo-tool" <<'EOF'
+#!/usr/bin/env bash
+echo "I AM ANOTHER demo-tool"
+EOF
+chmod +x "$FAKE_COL_BIN/demo-tool"
+# Put it at front of PATH
+export PATH="$FAKE_COL_BIN:$PATH"
+# Simulate user declining (n)
+set +e
+printf 'n
+' | (cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
+STATUS=$?
+set -e
+if [ $STATUS -ne 4 ]; then
+  echo "Test failed: expected exit code 4 when user declines PATH collision prompt, got $STATUS"
+  exit 1
+fi
+# Now simulate accepting via --yes non-interactive
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --yes demo-tool)
+if [ ! -f "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" ]; then
+  echo "Test failed: --yes should proceed despite PATH collision"
+  exit 1
+fi
+
+echo "Test 10 passed: PATH collision prompt behavior"
+
+# Restore PATH to include fake dotslash shim at front for next tests
+export PATH="$FAKE_BIN:$PATH"
+
+# Test 11: --force-no-dotslash proceeds when dotslash missing
+# Temporarily remove any PATH entries that contain an executable named 'dotslash'
+ORIG_PATH="$PATH"
+NEWPATH=""
+IFS=:
+for p in $ORIG_PATH; do
+  if [ ! -x "$p/dotslash" ]; then
+    if [ -z "$NEWPATH" ]; then
+      NEWPATH="$p"
+    else
+      NEWPATH="$NEWPATH:$p"
+    fi
+  fi
+done
+unset IFS
+PATH="$NEWPATH"
+# Sanity check: ensure dotslash is not found
+if command -v dotslash >/dev/null 2>&1; then
+  echo "Test setup failed: dotslash still found on PATH"
+  PATH="$ORIG_PATH"
+  exit 1
+fi
+# Run installer with --force-no-dotslash (should proceed)
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --force-no-dotslash demo-tool)
+if [ $? -ne 0 ]; then
+  echo "Test failed: --force-no-dotslash should allow the installer to proceed"
+  PATH="$ORIG_PATH"
+  exit 1
+fi
+# Restore PATH
+PATH="$ORIG_PATH"
+
+echo "Test 11 passed: --force-no-dotslash proceeds when dotslash missing"
+
+# Test 12: Help output
+OUT="$($SCRIPTS_DIR/dotslash-install -h 2>&1 || true)"
+if ! echo "$OUT" | grep -q "Usage:"; then
+  echo "Test failed: -h did not print usage"
+  exit 1
+fi
+
+echo "Test 12 passed: help output"
+
+# Test 13: --no-wrapper does not create wrapper
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_nowrapper"
+rm -rf "$DOTSLASH_INSTALL_DIR" && mkdir -p "$DOTSLASH_INSTALL_DIR"
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --no-wrapper demo-tool)
+if [ ! -f "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" ]; then
+  echo "Test failed: --no-wrapper should still copy the manifest"
+  exit 1
+fi
+if [ -f "$DOTSLASH_INSTALL_DIR/demo-tool" ]; then
+  echo "Test failed: --no-wrapper should not create a wrapper file"
+  exit 1
+fi
+
+echo "Test 13 passed: --no-wrapper behavior verified"
+
+# Test 14: manifest is executable after install
+export DOTSLASH_INSTALL_DIR="$TMPDIR/install_exec"
+rm -rf "$DOTSLASH_INSTALL_DIR" && mkdir -p "$DOTSLASH_INSTALL_DIR"
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
+if [ ! -x "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" ]; then
+  echo "Test failed: manifest should be executable after install"
+  exit 1
+fi
+
+echo "Test 14 passed: manifest executable"
+
 # Done
 echo "All tests passed."
