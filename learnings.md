@@ -1,3 +1,3 @@
 # Learnings - dotslash-install
 
-- 2026-01-12: Starting implementation. Followed plan to scaffold scripts/dotslash-install with argument parsing, exact-match discovery, target resolution, wrapper creation, and dry-run semantics. Added tests for exact-match, missing dotslash, dry-run, and unknown candidate flows. Fixed several PATH-related edge cases in tests.
+- 2026-01-12: Started implementation. Completed scaffold for scripts/dotslash-install with portable arg parsing, repo root detection, manifest discovery, exact-match and filename substring matching, wrapper creation, dry-run, and verbose output. Implemented fzf interactive selection with preview and numeric fallback. Implemented --append-path with idempotent append. Added tests covering exact-match, missing dotslash, dry-run, unknown candidate, and --append-path behavior. All tests pass locally.
