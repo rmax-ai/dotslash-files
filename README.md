@@ -91,6 +91,12 @@ Store DotSlash files in a logical location (root, a `tools/` directory, or a ded
   - Usage: ./scripts/dotslash-doctor <file.dotslash>
   - Use cases: Verify and update size, sha256, and path for platforms in a .dotslash file.
 
+- `scripts/dotslash-install`
+  - Install a .dotslash manifest from this repository's bin/ into a local bin directory and create a small wrapper that runs `dotslash <manifest>`.
+  - Usage: ./scripts/dotslash-install [OPTIONS] <query>
+  - Example: `./scripts/dotslash-install fzf` (installs the 'fzf' manifest and creates a wrapper in the target directory).
+  - See docs/dotslash-install-plan.md for implementation details and testing notes. Run `make install-tests` to execute the install test suite locally.
+
 ## References
 
 - Official project: [dotslash-cli.com](https://dotslash-cli.com)
