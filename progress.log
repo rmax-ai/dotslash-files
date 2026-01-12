@@ -4,3 +4,4 @@
 2026-01-12T00:10:00Z - TASK UPDATE: task-2 - scaffolding scripts/dotslash-install added with argument parsing, target resolution, candidate discovery, wrapper creation, dry-run and verbose support
 2026-01-12T00:20:00Z - TASK UPDATE: task-3 - tests/dotslash_install_test.sh added; initial tests for exact-match, missing dotslash, dry-run, and unknown candidate implemented and passing locally
 2026-01-12T00:30:00Z - TASK UPDATE: task-4 - Fixed duplicate block in tests and added install-tests Makefile target
+2026-01-12T00:40:00Z - TASK COMPLETE: initial tests pass locally; adjusted --yes semantics for non-destructive behavior and added SKIP_* flags to script
