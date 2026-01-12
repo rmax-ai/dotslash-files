@@ -404,12 +404,18 @@ Open questions & decisions
 
 PR checklist
 ------------
-- [ ] Add scripts/dotslash-install scaffold with usage and flags implemented and executable.
-- [ ] Add tests/dotslash_install_test.sh covering exact-match, selection fallback, missing-dotslash behavior, PATH append behavior, overwrite/force, and dry-run.
-- [ ] Add Makefile target `install-tests` and integrate with `make shim-tests` where appropriate.
-- [ ] Ensure tests are resilient when optional tools (fzf, jq) are missing; add simulation helpers where needed.
-- [ ] Update README.md with a short usage blurb and link to this proposal.
-- [ ] Add a draft PR and request at least one reviewer; ensure CI runs and tests pass.
+- [x] Add scripts/dotslash-install scaffold with usage and flags implemented and executable.
+- [x] Add tests/dotslash_install_test.sh covering exact-match, selection fallback, missing-dotslash behavior, PATH append behavior, overwrite/force, dry-run, numeric selection fallback, fzf interactive flow (pseudo-tty test), jq fallback parsing, malformed manifest handling, and symlink skipping.
+- [x] Add Makefile target `install-tests` and integrate with `make shim-tests` where appropriate.
+- [x] Ensure tests are resilient when optional tools (fzf, jq) are missing; add simulation helpers where needed (tests skip or simulate fzf and jq when absent).
+- [x] Update README.md with a short usage blurb and link to this proposal.
+- [ ] Add a draft PR and request at least one reviewer; ensure CI runs and tests pass. (Requires pushing a branch and creating a PR; awaiting user instruction to proceed.)
+
+Implementation status
+---------------------
+- Implementation complete: scripts/dotslash-install added and executable; test suite added and passing locally; Makefile target `install-tests` added; README updated.
+- Remaining manual step: open a draft PR and request review (requires permission to push a branch). See next steps.
+
 
 Next steps
 ----------
