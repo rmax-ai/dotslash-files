@@ -13,7 +13,12 @@ TEST_TARGETS := $(DOTSLASH_FILES:.dotslash=.test)
 # Default platform for sandbox tests (can be overridden by environment)
 TEST_SANDBOX_PLATFORM ?= linux/amd64
 
-.PHONY: test shim-tests check-deps clean
+.PHONY: test shim-tests bin-tests install-tests check-deps clean
+
+install-tests:
+	@./tests/dotslash_install_test.sh
+
+
 
 # Default test target
 test: shim-tests bin-tests install-tests
