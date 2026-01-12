@@ -147,8 +147,16 @@ declare -a CAND_PATHS
 
 for f in "$BIN_DIR"/*.dotslash; do
   [ -e "$f" ] || continue
+  # Skip symlinks in the repo to avoid following external files
+  if [ -L "$f" ]; then
+    echo "Warning: skipping symlink manifest $f"; continue
+  fi
   name=""
   if command -v jq >/dev/null 2>&1; then
+    # If jq is available, use it to detect malformed JSON and skip such files
+    if ! jq -e . "$f" >/dev/null 2>&1; then
+      echo "Warning: skipping malformed manifest $f"; continue
+    fi
     name=$(jq -r '.name // empty' "$f" 2>/dev/null || true)
   fi
   if [ -z "$name" ]; then
