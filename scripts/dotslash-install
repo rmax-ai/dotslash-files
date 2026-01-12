@@ -193,23 +193,42 @@ if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
   exit 2
 fi
 
-# If multiple candidates, for now, if only one proceed, otherwise list and ask user to pick (non-fzf basic)
+# If multiple candidates, use fzf when available and not disabled; otherwise numeric selection fallback
 chosen_index=${MATCH_INDICES[0]}
 if [ ${#MATCH_INDICES[@]} -gt 1 ]; then
-  echo "Multiple candidates found matching '$QUERY':"
-  for idx in "${MATCH_INDICES[@]}"; do
-    echo "  [$idx] ${CAND_NAMES[$idx]} - ${CAND_PATHS[$idx]}"
-  done
-  # If non-interactive, abort
-  if [ "$YES" = true ]; then
-    echo "Multiple candidates; non-interactive and --yes given: aborting."
-    exit 4
+  if [ "$NO_FZF" = false ] && command -v fzf >/dev/null 2>&1 && [ -t 0 ]; then
+    # Provide the matching file paths to fzf and let user select; preview using jq or sed
+    selection=$(for idx in "${MATCH_INDICES[@]}"; do printf '%s
+' "${CAND_PATHS[$idx]}"; done | fzf --preview 'jq -C . {} 2>/dev/null || sed -n "1,200p" {}' --ansi --border --prompt="Select manifest> " --select-1 --exit-0)
+    if [ -z "${selection:-}" ]; then
+      echo "Aborted"; exit 4
+    fi
+    # Map selection back to index
+    found="false"
+    for idx in "${MATCH_INDICES[@]}"; do
+      if [ "${CAND_PATHS[$idx]}" = "$selection" ]; then
+        chosen_index=$idx; found="true"; break
+      fi
+    done
+    if [ "$found" = "false" ]; then
+      echo "Selection not found"; exit 1
+    fi
+  else
+    echo "Multiple candidates found matching '$QUERY':"
+    for idx in "${MATCH_INDICES[@]}"; do
+      echo "  [$idx] ${CAND_NAMES[$idx]} - ${CAND_PATHS[$idx]}"
+    done
+    # If non-interactive, abort
+    if [ "$YES" = true ]; then
+      echo "Multiple candidates; non-interactive and --yes given: aborting."
+      exit 4
+    fi
+    read -rp "Select index: " sel
+    if ! echo "$sel" | grep -qE '^[0-9]+$'; then
+      echo "Invalid selection"; exit 1
+    fi
+    chosen_index=$sel
   fi
-  read -rp "Select index: " sel
-  if ! echo "$sel" | grep -qE '^[0-9]+$'; then
-    echo "Invalid selection"; exit 1
-  fi
-  chosen_index=$sel
 fi
 
 CAND_NAME="${CAND_NAMES[$chosen_index]}"
