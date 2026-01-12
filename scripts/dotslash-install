@@ -39,16 +39,12 @@ logv() {
   fi
 }
 
-# parse args (getopt)
-ARGS=$(getopt -o t:yfnh --long target:,yes,force,force-no-dotslash,no-fzf,no-wrapper,append-path,dry-run,verbose,help -n "$PROG_NAME" -- "$@")
-if [ $? -ne 0 ]; then
-  usage
-  exit 1
-fi
-eval set -- "$ARGS"
-while true; do
+# simple POSIX argument parsing (portable)
+while [ $# -gt 0 ]; do
   case "$1" in
     -t|--target)
+      if [ $# -lt 2 ]; then
+        echo "Error: --target requires an argument"; usage; exit 1; fi
       TARGET="$2"; shift 2;;
     -y|--yes)
       YES=true; shift;;
@@ -70,18 +66,26 @@ while true; do
       usage; exit 0;;
     --)
       shift; break;;
-    *)
+    -*)
       echo "Invalid option: $1"; usage; exit 1;;
+    *)
+      if [ -z "${QUERY:-}" ]; then
+        QUERY="$1"; shift;
+      else
+        echo "Multiple queries not supported"; usage; exit 1;
+      fi;;
   esac
 done
 
-if [ $# -lt 1 ]; then
-  echo "Error: missing query"
-  usage
-  exit 1
+# QUERY may have been set by the simple parser above
+if [ -z "${QUERY:-}" ]; then
+  if [ $# -lt 1 ]; then
+    echo "Error: missing query"
+    usage
+    exit 1
+  fi
+  QUERY="$1"
 fi
-
-QUERY="$1"
 
 # Verify 'dotslash' presence unless skipped
 if [ "$FORCE_NO_DOTSLASH" = false ]; then
@@ -91,11 +95,16 @@ if [ "$FORCE_NO_DOTSLASH" = false ]; then
     exit 3
   fi
 fi
+# In tests we may want to skip this check by setting FORCE_NO_DOTSLASH or by invoking the script with the environment modified.
 
 # Repo root detection
 REPO_ROOT=""
+# Prefer git repo root when available
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
+# If running inside a directory that contains a bin/ folder, prefer the current working directory
+elif [ -d "$(pwd)/bin" ]; then
+  REPO_ROOT="$(pwd)"
 else
   # fallback: script dir parent
   REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"

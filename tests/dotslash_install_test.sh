@@ -59,8 +59,57 @@ fi
 echo "Test 1 passed: exact match install"
 
 # Test 2: Missing dotslash behavior
-# Remove the fake dotslash from PATH
-export PATH="$(echo $PATH | sed -e 's~$FAKE_BIN:~~')"
+# Temporarily remove any PATH entries that contain an executable named 'dotslash'
+ORIG_PATH="$PATH"
+NEWPATH=""
+IFS=:
+for p in $ORIG_PATH; do
+  if [ ! -x "$p/dotslash" ]; then
+    if [ -z "$NEWPATH" ]; then
+      NEWPATH="$p"
+    else
+      NEWPATH="$NEWPATH:$p"
+    fi
+  fi
+done
+unset IFS
+PATH="$NEWPATH"
+# Sanity check: ensure dotslash is not found
+if command -v dotslash >/dev/null 2>&1; then
+  echo "Test setup failed: dotslash still found on PATH"; PATH="$ORIG_PATH"; exit 1
+fi
+
+# Run the installer expecting exit code 3
+set +e
+( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool )
+STATUS=$?
+set -e
+if [ $STATUS -ne 3 ]; then
+  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"; PATH="$ORIG_PATH"; exit 1
+fi
+
+echo "Test 2 passed: missing dotslash behavior"
+
+# Restore PATH for subsequent tests
+PATH="$ORIG_PATH"
+  exit 1
+fi
+
+# Run the installer expecting exit code 3
+set +e
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
+STATUS=$?
+set -e
+if [ $STATUS -ne 3 ]; then
+  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"
+  PATH="$ORIG_PATH"
+  exit 1
+fi
+
+echo "Test 2 passed: missing dotslash behavior"
+
+# Restore PATH for subsequent tests
+PATH="$ORIG_PATH"
 
 set +e
 (cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
