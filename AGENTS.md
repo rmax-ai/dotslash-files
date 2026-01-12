@@ -12,6 +12,12 @@ Rules
 
   Rationale: `make shim-tests` runs the shim test suite (via `./run_shim_tests.sh`) which validates behavior of the shim(s).
 
+  Note: When adding or modifying installer-related scripts (e.g., `scripts/dotslash-install`) or tests under `tests/dotslash_install_test.sh`, also run:
+
+    make install-tests
+
+  Rationale: `make install-tests` runs the install test suite that validates installer behavior and should be run whenever the installer script or its tests change.
+
 - When a commit/PR adds new files under `bin/` (new `.dotslash` manifests or binaries), run:
 
     make bin-tests
@@ -21,6 +27,12 @@ Rules
 - If both areas are changed, run both targets (order doesn't matter):
 
     make shim-tests && make bin-tests
+
+- If changes touch scripts/ and the installer (scripts/dotslash-install), consider running all three targets:
+
+    make shim-tests && make bin-tests && make install-tests
+
+  This ensures all relevant test suites are executed for cross-cutting changes.
 
 Notes / Implementation hints
 ---------------------------
