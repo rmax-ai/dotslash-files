@@ -367,7 +367,14 @@ if ! echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
     RC=""
     case "$(basename "${SHELL:-/bin/sh}")" in
       zsh) RC="$HOME/.zshrc";;
-      bash) RC="$HOME/.bashrc";;
+      bash)
+        # On macOS prefer ~/.bash_profile if present
+        if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ -f "$HOME/.bash_profile" ]; then
+          RC="$HOME/.bash_profile"
+        else
+          RC="$HOME/.bashrc"
+        fi
+        ;;
       *) RC="$HOME/.profile";;
     esac
     echo "\n--append-path requested: would append export line to $RC"
