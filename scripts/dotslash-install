@@ -177,20 +177,16 @@ for f in "$BIN_DIR"/*.dotslash; do
   CAND_PATHS+=("$f")
 done
 
-# Find matches: exact by name
-matched_index=-1
+# Find matches: exact by name (collect all matches to handle duplicate .name values)
+declare -a MATCH_INDICES
 for i in "${!CAND_NAMES[@]}"; do
   if [ "${CAND_NAMES[$i]}" = "$QUERY" ]; then
-    matched_index=$i
-    break
+    MATCH_INDICES+=($i)
   fi
 done
 
 # If no exact match, try substring match on filename
-declare -a MATCH_INDICES
-if [ $matched_index -ge 0 ]; then
-  MATCH_INDICES+=($matched_index)
-else
+if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
   for i in "${!CAND_PATHS[@]}"; do
     fname="$(basename "${CAND_PATHS[$i]}")"
     if echo "$fname" | grep -qi "$QUERY"; then
