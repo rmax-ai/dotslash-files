@@ -76,22 +76,19 @@ unset IFS
 PATH="$NEWPATH"
 # Sanity check: ensure dotslash is not found
 if command -v dotslash >/dev/null 2>&1; then
-  echo "Test setup failed: dotslash still found on PATH"; PATH="$ORIG_PATH"; exit 1
+  echo "Test setup failed: dotslash still found on PATH"
+  PATH="$ORIG_PATH"
+  exit 1
 fi
 
 # Run the installer expecting exit code 3
 set +e
-( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool )
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
 STATUS=$?
 set -e
 if [ $STATUS -ne 3 ]; then
-  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"; PATH="$ORIG_PATH"; exit 1
-fi
-
-echo "Test 2 passed: missing dotslash behavior"
-
-# Restore PATH for subsequent tests
-PATH="$ORIG_PATH"
+  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"
+  PATH="$ORIG_PATH"
   exit 1
 fi
 
@@ -99,6 +96,8 @@ echo "Test 2 passed: missing dotslash behavior"
 
 # Restore PATH for subsequent tests
 PATH="$ORIG_PATH"
+
+echo "Test 2 passed: missing dotslash behavior"
 
 set +e
 (cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
@@ -114,14 +113,15 @@ echo "Test 2 passed: missing dotslash behavior"
 # Test 3: Dry-run does not write files
 export PATH="$FAKE_BIN:$PATH"
 rm -f "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" "$DOTSLASH_INSTALL_DIR/demo-tool"
-( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --dry-run demo-tool )
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --dry-run demo-tool)
 if [ -f "$DOTSLASH_INSTALL_DIR/demo-tool.dotslash" ] || [ -f "$DOTSLASH_INSTALL_DIR/demo-tool" ]; then
-  echo "Test failed: dry-run should not create files"; exit 1
+  echo "Test failed: dry-run should not create files"
+  exit 1
 fi
 
 # Run dry-run with --append-path to verify no rc modification takes place
 RC_TEMP="$TMPDIR/rc"
-cat > "$RC_TEMP" <<'EOF'
+cat >"$RC_TEMP" <<'EOF'
 # empty rc
 EOF
 chmod 0644 "$RC_TEMP"
@@ -132,10 +132,13 @@ export SHELL="/bin/bash"
 OLD_HOME="$HOME"
 export HOME="$TMPDIR"
 mv "$RC_TEMP" "$HOME/.bashrc"
-( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --dry-run --append-path demo-tool )
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --dry-run --append-path demo-tool)
 # ensure the rc file was not modified
 if grep -q "added by dotslash-install" "$HOME/.bashrc"; then
-  echo "Test failed: dry-run --append-path should not modify rc file"; export HOME="$OLD_HOME"; export SHELL="$OLD_SHELL"; exit 1
+  echo "Test failed: dry-run --append-path should not modify rc file"
+  export HOME="$OLD_HOME"
+  export SHELL="$OLD_SHELL"
+  exit 1
 fi
 # restore
 export HOME="$OLD_HOME"
@@ -155,15 +158,17 @@ RC_FILE="$HOME/.bashrc"
 rm -f "$RC_FILE"
 
 # Run installer with --append-path to modify rc
-( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --append-path --yes demo-tool )
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --append-path --yes demo-tool)
 if ! grep -q "# added by dotslash-install" "$RC_FILE"; then
-  echo "Test failed: --append-path should append to RC file"; exit 1
+  echo "Test failed: --append-path should append to RC file"
+  exit 1
 fi
 # Run again to test idempotency
-( cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --append-path --yes demo-tool )
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --append-path --yes demo-tool)
 COUNT=$(grep -c "# added by dotslash-install" "$RC_FILE" || true)
 if [ "$COUNT" -ne 1 ]; then
-  echo "Test failed: --append-path should be idempotent (expected 1 marker, got $COUNT)"; exit 1
+  echo "Test failed: --append-path should be idempotent (expected 1 marker, got $COUNT)"
+  exit 1
 fi
 
 echo "Test 5 passed: --append-path modifies rc file and is idempotent"
