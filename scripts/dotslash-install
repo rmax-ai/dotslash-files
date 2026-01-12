@@ -252,10 +252,7 @@ if command -v "$BASE_NAME" >/dev/null 2>&1; then
   existing_loc=$(command -v "$BASE_NAME")
   echo "Warning: a command named '$BASE_NAME' exists on PATH at $existing_loc"
   if [ "$YES" = true ]; then
-    if [ "$FORCE" = false ]; then
-      echo "Non-interactive and --yes provided but --force not provided; aborting to avoid overwriting PATH command."
-      exit 4
-    fi
+    logv "Non-interactive: --yes provided; proceeding despite PATH collision"
   else
     read -rp "Install '$BASE_NAME' anyway? (y/N) " yn
     case "$yn" in
