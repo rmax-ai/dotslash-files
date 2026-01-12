@@ -14,6 +14,9 @@ NO_WRAPPER=false
 APPEND_PATH=false
 DRY_RUN=false
 VERBOSE=false
+# Internal control flags
+SKIP_MANIFEST_COPY=false
+SKIP_WRAPPER=false
 
 usage() {
   cat <<EOF
