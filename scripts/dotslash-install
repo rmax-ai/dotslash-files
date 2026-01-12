@@ -273,27 +273,33 @@ fi
 
 # Copy manifest
 target_manifest="$TARGET/$BASE_NAME.dotslash"
+SKIP_MANIFEST_COPY=false
 if [ -e "$target_manifest" ]; then
   if [ "$FORCE" = true ]; then
     logv "Overwriting existing manifest: $target_manifest"
   else
     if [ "$YES" = true ]; then
-      echo "Non-interactive mode (--yes) without --force; existing files will not be overwritten; aborting."
-      exit 4
+      logv "Non-interactive: --yes provided; not overwriting existing manifest; skipping copy."
+      SKIP_MANIFEST_COPY=true
+    else
+      read -rp "Target manifest exists at $target_manifest. Overwrite? (y/N) " yn
+      case "$yn" in
+        [Yy]*) ;;
+        *) echo "Aborted"; exit 4;;
+      esac
     fi
-    read -rp "Target manifest exists at $target_manifest. Overwrite? (y/N) " yn
-    case "$yn" in
-      [Yy]*) ;;
-      *) echo "Aborted"; exit 4;;
-    esac
   fi
 fi
 
 if [ "$DRY_RUN" = true ]; then
   echo "Would copy: $CAND_PATH -> $target_manifest"
 else
-  cp -p "$CAND_PATH" "$target_manifest" || { echo "Error: could not copy manifest"; exit 12; }
-  chmod +x "$target_manifest" || true
+  if [ "$SKIP_MANIFEST_COPY" = true ]; then
+    logv "Skipping copy of existing manifest: $target_manifest"
+  else
+    cp -p "$CAND_PATH" "$target_manifest" || { echo "Error: could not copy manifest"; exit 12; }
+    chmod +x "$target_manifest" || true
+  fi
 fi
 
 # Create wrapper unless --no-wrapper
@@ -304,27 +310,32 @@ if [ "$NO_WRAPPER" = false ]; then
       logv "Overwriting existing wrapper: $wrapper"
     else
       if [ "$YES" = true ]; then
-        echo "Non-interactive mode (--yes) without --force; existing files will not be overwritten; aborting."
-        exit 4
+        logv "Non-interactive: --yes provided; not overwriting existing wrapper; skipping wrapper creation."
+        SKIP_WRAPPER=true
+      else
+        read -rp "Target wrapper exists at $wrapper. Overwrite? (y/N) " yn
+        case "$yn" in
+          [Yy]*) ;;
+          *) echo "Aborted"; exit 4;;
+        esac
       fi
-      read -rp "Target wrapper exists at $wrapper. Overwrite? (y/N) " yn
-      case "$yn" in
-        [Yy]*) ;;
-        *) echo "Aborted"; exit 4;;
-      esac
     fi
   fi
 
   if [ "$DRY_RUN" = true ]; then
     echo "Would create wrapper: $wrapper"
   else
-    cat > "$wrapper" <<EOF
+    if [ "$SKIP_WRAPPER" = true ]; then
+      logv "Skipping wrapper creation: $wrapper"
+    else
+      cat > "$wrapper" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 DIR="\$(cd "\$(dirname "\${0}")" >/dev/null 2>&1 && pwd)"
 exec dotslash "\$DIR/$BASE_NAME.dotslash" "\$@"
 EOF
-    chmod 0755 "$wrapper"
+      chmod 0755 "$wrapper"
+    fi
   fi
 fi
 
