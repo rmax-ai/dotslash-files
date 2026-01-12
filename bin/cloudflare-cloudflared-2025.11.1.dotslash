@@ -1,0 +1,50 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=cloudflare/cloudflared TAG=2025.11.1",
+  "name": "cloudflared",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 41258324,
+      "hash": "sha256",
+      "digest": "db7e8200bb56a317ff460cefacfbe3ba638753740b272d296fe89686ce0a67dc",
+      "path": "cloudflared",
+      "providers": [
+        { "url": "https://github.com/cloudflare/cloudflared/releases/download/2025.11.1/cloudflared-linux-amd64" },
+        { "type": "github-release", "repo": "cloudflare/cloudflared", "tag": "2025.11.1", "name": "cloudflared-linux-amd64" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 39336519,
+      "hash": "sha256",
+      "digest": "9979dc152097a29b6de4d1ef13e2f1821c67a6f096f88cc18f0fd25106305d3a",
+      "path": "cloudflared",
+      "providers": [
+        { "url": "https://github.com/cloudflare/cloudflared/releases/download/2025.11.1/cloudflared-linux-arm64" },
+        { "type": "github-release", "repo": "cloudflare/cloudflared", "tag": "2025.11.1", "name": "cloudflared-linux-arm64" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 21085433,
+      "hash": "sha256",
+      "digest": "155a288fef19dba08f0c7145c16a207baf137462d8a1289a78bf8564f9e51244",
+      "format": "tar.gz",
+      "path": "cloudflared",
+      "providers": [
+        { "url": "https://github.com/cloudflare/cloudflared/releases/download/2025.11.1/cloudflared-darwin-amd64.tgz" },
+        { "type": "github-release", "repo": "cloudflare/cloudflared", "tag": "2025.11.1", "name": "cloudflared-darwin-amd64.tgz" }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 19389806,
+      "hash": "sha256",
+      "digest": "45cfbb59a720f60b873906aa6469f8c4058f26be6d351c3e2920bc9cb4714273",
+      "format": "tar.gz",
+      "path": "cloudflared",
+      "providers": [
+        { "url": "https://github.com/cloudflare/cloudflared/releases/download/2025.11.1/cloudflared-darwin-arm64.tgz" },
+        { "type": "github-release", "repo": "cloudflare/cloudflared", "tag": "2025.11.1", "name": "cloudflared-darwin-arm64.tgz" }
+      ]
+    }
+  }
+}
