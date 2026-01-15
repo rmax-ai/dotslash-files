@@ -1,0 +1,68 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=google-cloud-sdk TAG=v551.0.0",
+  "name": "gcloud",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 58084929,
+      "hash": "sha256",
+      "digest": "584f40eeec5e222fe4f79abe0baa88ff92cace02b9862e77827d2f2b0dc39435",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-arm.tar.gz" }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 58158317,
+      "hash": "sha256",
+      "digest": "d6ac470153616f77598895da121bbd0f5255f0a4080cf09a9d35fac6461e8715",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-x86_64.tar.gz" }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 58015179,
+      "hash": "sha256",
+      "digest": "e540d6cb9dc0d115dccf65bdd78bcc79d1e24ae850b28cddce64ed53dee0060f",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz" }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 203232640,
+      "hash": "sha256",
+      "digest": "9a052fb99838c2bb328bcc0884d7a7deae91f1f6c66e9b0022342612ac27f346",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" }
+      ]
+    },
+    "linux-x86": {
+      "size": 58066503,
+      "hash": "sha256",
+      "digest": "98d5c95691d93b01b6dc1e2e2d9c6f88cc3179910e730ae31075623561ecc965",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86.tar.gz" }
+      ]
+    },
+    "macos-x86": {
+      "size": 56588557,
+      "hash": "sha256",
+      "digest": "a8c3822480c43f27182006dbf69ca3d6bfe4f565b67ead9f67998d5bbb432ca2",
+      "format": "tar.gz",
+      "path": "google-cloud-sdk/bin/gcloud",
+      "providers": [
+        { "url": "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-x86.tar.gz" }
+      ]
+    }
+  }
+}
