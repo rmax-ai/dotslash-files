@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=steveyegge/gastown TAG=v0.5.0",
+  "name": "gastown",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 7341471,
+      "hash": "sha256",
+      "digest": "4043e23d8beed28c09dffade011dcfaa7b56c3995746643e44ab86cb52393d46",
+      "format": "tar.gz",
+      "path": "gt",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/gastown/releases/download/v0.5.0/gastown_0.5.0_darwin_arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/gastown",
+          "tag": "v0.5.0",
+          "name": "gastown_0.5.0_darwin_arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 7806732,
+      "hash": "sha256",
+      "digest": "01d548058e7bf6bd2cb56d03d3a690f9ed4cb0e25a941a0e48724618c6f585e5",
+      "format": "tar.gz",
+      "path": "gt",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/gastown/releases/download/v0.5.0/gastown_0.5.0_darwin_amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/gastown",
+          "tag": "v0.5.0",
+          "name": "gastown_0.5.0_darwin_amd64.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 7076886,
+      "hash": "sha256",
+      "digest": "b3d57a3c80229079aeb236dc059b190fe40ee3229030ca4a43fc47f32bbd9145",
+      "format": "tar.gz",
+      "path": "gt",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/gastown/releases/download/v0.5.0/gastown_0.5.0_linux_arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/gastown",
+          "tag": "v0.5.0",
+          "name": "gastown_0.5.0_linux_arm64.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 7706033,
+      "hash": "sha256",
+      "digest": "438245c0ac91a42eead4a1b1b744b505a1f7042a274239e659980f67b7886780",
+      "format": "tar.gz",
+      "path": "gt",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/gastown/releases/download/v0.5.0/gastown_0.5.0_linux_amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/gastown",
+          "tag": "v0.5.0",
+          "name": "gastown_0.5.0_linux_amd64.tar.gz"
+        }
+      ]
+    }
+  }
+}
