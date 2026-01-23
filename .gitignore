@@ -1,68 +1,199 @@
-# .gitignore for dotslash-files
-# Ignore common OS, editor, build artifacts and local sandbox dirs
+# =============================================================================
+#     _____ _ _     _____
+#    / ____(_) |   |_   _|
+#   | |  __ _| |_    | |  __ _ _ __   ___  _ __ ___
+#   | | |_ | | __|   | | / _` | '_ \ / _ \| '__/ _ \
+#   | |__| | | |_   _| || (_| | | | | (_) | | |  __/
+#    \_____|_|\__| |_____\__, |_| |_|\___/|_|  \___|
+#                         __/ |
+#                        |___/
+#
+# Git ignore file for dotslash-files
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# Project Specific (Sandbox & Indexing)
+# -----------------------------------------------------------------------------
+.sandbox-home*
+.sandbox-*
+.tags
+cscope.out
+
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+node_modules/
+bower_components/
+jspm_packages/
+vendor/
+*.egg-info/
+dist-packages/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# -----------------------------------------------------------------------------
+# Build outputs
+# -----------------------------------------------------------------------------
+dist/
+build/
+out/
+target/
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+*.lib
+*.war
+*.ear
+*.jar
+
+# -----------------------------------------------------------------------------
+# Environment & Configuration
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+.env.*
+.envrc
+secrets.yml
+secrets.json
+
+# -----------------------------------------------------------------------------
+# Logs & Temporary Files
+# -----------------------------------------------------------------------------
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.backup
+.*.swp
+
+# -----------------------------------------------------------------------------
+# IDE & Editor Files
+# -----------------------------------------------------------------------------
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# -----------------------------------------------------------------------------
+# Operating System Files
+# -----------------------------------------------------------------------------
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
 # Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
 Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# Editor / IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-*.swp
-*.swo
-*~
+# Linux
+.directory
+.Trash-*
+.nfs*
 
-# Node / JS
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json
-pnpm-lock.yaml
-bun.lock
-bun.lockb
-dist/
-build/
-.cache/
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-venv/
-.venv/
-.env
-.env.*
-
-# Test / coverage
+# -----------------------------------------------------------------------------
+# Testing & Coverage
+# -----------------------------------------------------------------------------
 coverage/
 .coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
 .pytest_cache/
+.tox/
+.nox/
+test-results/
+junit.xml
 
-# Local sandbox / CI artifacts (created by tests/scripts)
-.sandbox-home*
-.sandbox-*
+# -----------------------------------------------------------------------------
+# Cache & Runtime Files
+# -----------------------------------------------------------------------------
+.cache/
+*.cache
+.npm/
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.next/
+.nuxt/
+.gatsby/
+.serverless/
 
-# Tags / cscope
-.tags
-cscope.out
+# -----------------------------------------------------------------------------
+# Lock Files (Generally tracked, uncomment to ignore)
+# -----------------------------------------------------------------------------
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+# bun.lock
+# bun.lockb
+# Gemfile.lock
+# Pipfile.lock
+# poetry.lock
 
-# Logs and temporary files
-*.log
-tmp/
-temp/
-*.tmp
-
-# Misc backups
-*.bak
-
-# End of file
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+*.orig
+*.rej
+*.diff
+*.patch
+.scratch/
+TODO.txt
+notes.txt
