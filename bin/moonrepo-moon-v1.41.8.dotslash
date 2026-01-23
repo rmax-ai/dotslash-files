@@ -1,0 +1,76 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=moonrepo/moon TAG=v1.41.8",
+  "name": "moon",
+  "platforms": {
+    "linux-aarch64": {
+      "size": 37447240,
+      "hash": "sha256",
+      "digest": "83e20e3cd787219e8d9fe00d70a7e4fdcfe389ca83914485e5593c330eefb427",
+      "path": "moon",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/moon/releases/download/v1.41.8/moon-aarch64-unknown-linux-gnu"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/moon",
+          "tag": "v1.41.8",
+          "name": "moon-aarch64-unknown-linux-gnu"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 48009112,
+      "hash": "sha256",
+      "digest": "4592830af50746f8e54d2f38b9676a8819fe861e1934e8d5144a08856e5f8304",
+      "path": "moon",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/moon/releases/download/v1.41.8/moon-x86_64-unknown-linux-gnu"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/moon",
+          "tag": "v1.41.8",
+          "name": "moon-x86_64-unknown-linux-gnu"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 24695360,
+      "hash": "sha256",
+      "digest": "3cf3e897f8fe900ce72b5187e5346d60e6659f0b9e234b3522045df4a7aa2c2c",
+      "path": "moon",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/moon/releases/download/v1.41.8/moon-aarch64-apple-darwin"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/moon",
+          "tag": "v1.41.8",
+          "name": "moon-aarch64-apple-darwin"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 34879692,
+      "hash": "sha256",
+      "digest": "58a414a08359e770137c94e166831f293e026f49666d9995bac968af5edef610",
+      "path": "moon",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/moon/releases/download/v1.41.8/moon-x86_64-apple-darwin"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/moon",
+          "tag": "v1.41.8",
+          "name": "moon-x86_64-apple-darwin"
+        }
+      ]
+    }
+  }
+}
