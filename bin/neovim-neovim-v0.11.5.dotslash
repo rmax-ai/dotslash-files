@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=neovim/neovim TAG=v0.11.5",
+  "name": "neovim",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 10973811,
+      "hash": "sha256",
+      "digest": "b2f91117be5b5ea39edd7297156dc2a4a8df4add6c95a90809a8df19e7ab6f52",
+      "format": "tar.gz",
+      "path": "nvim-linux-x86_64/bin/nvim",
+      "providers": [
+        {
+          "url": "https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-linux-x86_64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "neovim/neovim",
+          "tag": "v0.11.5",
+          "name": "nvim-linux-x86_64.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 10909960,
+      "hash": "sha256",
+      "digest": "ea4f9a31b11cc1477ff014aebb7b207684e7280f94ffa97abdab6cacd9b98519",
+      "format": "tar.gz",
+      "path": "nvim-linux-arm64/bin/nvim",
+      "providers": [
+        {
+          "url": "https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-linux-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "neovim/neovim",
+          "tag": "v0.11.5",
+          "name": "nvim-linux-arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 9487191,
+      "hash": "sha256",
+      "digest": "6612760a7037ca2518e456908baf5e43101fa79819d18979fc4d4e8441d9dfa5",
+      "format": "tar.gz",
+      "path": "nvim-macos-x86_64/bin/nvim",
+      "providers": [
+        {
+          "url": "https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-macos-x86_64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "neovim/neovim",
+          "tag": "v0.11.5",
+          "name": "nvim-macos-x86_64.tar.gz"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 9204217,
+      "hash": "sha256",
+      "digest": "79143d3b408f7034f90b7cf59af2276de09ef8a4c2f1a28e4c99581b249d3107",
+      "format": "tar.gz",
+      "path": "nvim-macos-arm64/bin/nvim",
+      "providers": [
+        {
+          "url": "https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-macos-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "neovim/neovim",
+          "tag": "v0.11.5",
+          "name": "nvim-macos-arm64.tar.gz"
+        }
+      ]
+    }
+  }
+}
