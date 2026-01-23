@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=steveyegge/beads TAG=v0.47.1",
+  "name": "beads",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 11094423,
+      "hash": "sha256",
+      "digest": "10af8795b49d6da4aa4fe6b2930dffc692ac716d59003e3c893129ee2398b639",
+      "format": "tar.gz",
+      "path": "bd",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/beads/releases/download/v0.47.1/beads_0.47.1_darwin_arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/beads",
+          "tag": "v0.47.1",
+          "name": "beads_0.47.1_darwin_arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 11761614,
+      "hash": "sha256",
+      "digest": "587cc9aee9a0bd7df5772040d3d6acf03971c939a3c4a94a3a0ddadd9924a7b1",
+      "format": "tar.gz",
+      "path": "bd",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/beads/releases/download/v0.47.1/beads_0.47.1_darwin_amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/beads",
+          "tag": "v0.47.1",
+          "name": "beads_0.47.1_darwin_amd64.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 10670732,
+      "hash": "sha256",
+      "digest": "90bb6d50face32fb40b2d94fb6ba415afe6da6078c823eeb5956551b852caf07",
+      "format": "tar.gz",
+      "path": "bd",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/beads/releases/download/v0.47.1/beads_0.47.1_linux_arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/beads",
+          "tag": "v0.47.1",
+          "name": "beads_0.47.1_linux_arm64.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 11583823,
+      "hash": "sha256",
+      "digest": "6003e3732fbdb35696acaa2cdb6883bb80429e31f8474aa1027cd8b75ee9af8b",
+      "format": "tar.gz",
+      "path": "bd",
+      "providers": [
+        {
+          "url": "https://github.com/steveyegge/beads/releases/download/v0.47.1/beads_0.47.1_linux_amd64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "steveyegge/beads",
+          "tag": "v0.47.1",
+          "name": "beads_0.47.1_linux_amd64.tar.gz"
+        }
+      ]
+    }
+  }
+}
