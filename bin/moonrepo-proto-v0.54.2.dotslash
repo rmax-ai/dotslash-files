@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=moonrepo/proto TAG=v0.54.2",
+  "name": "proto",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 7293084,
+      "hash": "sha256",
+      "digest": "6e41aba82305747611605a5e7646573a94a333d96db6f80830718e5fc79db952",
+      "format": "tar.xz",
+      "path": "proto_cli-aarch64-apple-darwin/proto",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/proto/releases/download/v0.54.2/proto_cli-aarch64-apple-darwin.tar.xz"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/proto",
+          "tag": "v0.54.2",
+          "name": "proto_cli-aarch64-apple-darwin.tar.xz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 8769520,
+      "hash": "sha256",
+      "digest": "62fa10d059786dc97deff62f100d5816f42ac31450a4a03fd0530683c6cc20a1",
+      "format": "tar.xz",
+      "path": "proto_cli-x86_64-apple-darwin/proto",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/proto/releases/download/v0.54.2/proto_cli-x86_64-apple-darwin.tar.xz"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/proto",
+          "tag": "v0.54.2",
+          "name": "proto_cli-x86_64-apple-darwin.tar.xz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 10112072,
+      "hash": "sha256",
+      "digest": "f3dfd5e271732412873c90fc403a20f2075d8c1b932dcb752eee395cc8ff296a",
+      "format": "tar.xz",
+      "path": "proto_cli-aarch64-unknown-linux-gnu/proto",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/proto/releases/download/v0.54.2/proto_cli-aarch64-unknown-linux-gnu.tar.xz"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/proto",
+          "tag": "v0.54.2",
+          "name": "proto_cli-aarch64-unknown-linux-gnu.tar.xz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 10612404,
+      "hash": "sha256",
+      "digest": "ea184c070d976aae00df3bfa19b39569c789fe6693f5b6504d8c406a373e1bd6",
+      "format": "tar.xz",
+      "path": "proto_cli-x86_64-unknown-linux-gnu/proto",
+      "providers": [
+        {
+          "url": "https://github.com/moonrepo/proto/releases/download/v0.54.2/proto_cli-x86_64-unknown-linux-gnu.tar.xz"
+        },
+        {
+          "type": "github-release",
+          "repo": "moonrepo/proto",
+          "tag": "v0.54.2",
+          "name": "proto_cli-x86_64-unknown-linux-gnu.tar.xz"
+        }
+      ]
+    }
+  }
+}
