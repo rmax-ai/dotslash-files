@@ -1,0 +1,59 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=patrickvane/shfmt TAG=master",
+  "name": "shfmt",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 4239024,
+      "hash": "sha256",
+      "digest": "16265baaf94bd167f93e4cd620ef0006d3a102a879f295260248e64a69b315ff",
+      "path": "shfmt",
+      "providers": [
+        {
+          "url": "https://github.com/patrickvane/shfmt/releases/download/master/shfmt_darwin_amd64"
+        },
+        {
+          "type": "github-release",
+          "repo": "patrickvane/shfmt",
+          "tag": "master",
+          "name": "shfmt_darwin_amd64"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 4239024,
+      "hash": "sha256",
+      "digest": "16265baaf94bd167f93e4cd620ef0006d3a102a879f295260248e64a69b315ff",
+      "path": "shfmt",
+      "providers": [
+        {
+          "url": "https://github.com/patrickvane/shfmt/releases/download/master/shfmt_darwin_amd64"
+        },
+        {
+          "type": "github-release",
+          "repo": "patrickvane/shfmt",
+          "tag": "master",
+          "name": "shfmt_darwin_amd64"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 4320120,
+      "hash": "sha256",
+      "digest": "ef286f12446dcedc3ef7993102eac5a06b330518962edb8c6844886cde255e11",
+      "path": "shfmt",
+      "providers": [
+        {
+          "url": "https://github.com/patrickvane/shfmt/releases/download/master/shfmt_linux_amd64"
+        },
+        {
+          "type": "github-release",
+          "repo": "patrickvane/shfmt",
+          "tag": "master",
+          "name": "shfmt_linux_amd64"
+        }
+      ]
+    }
+  }
+}
