@@ -1,0 +1,76 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=vercel-labs/agent-browser TAG=v0.7.6",
+  "name": "agent-browser",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 669088,
+      "hash": "sha256",
+      "digest": "11f38cd92abd0d50ad5d4a92e23cfe9c73725bad08136fb4a61d8ccb6179bc6a",
+      "path": "agent-browser",
+      "providers": [
+        {
+          "url": "https://github.com/vercel-labs/agent-browser/releases/download/v0.7.6/agent-browser-darwin-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "vercel-labs/agent-browser",
+          "tag": "v0.7.6",
+          "name": "agent-browser-darwin-arm64"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 704776,
+      "hash": "sha256",
+      "digest": "5f5369f6f1a959a4d6ab74b06e696f2fef11444d59e1191ac545d46031c36e00",
+      "path": "agent-browser",
+      "providers": [
+        {
+          "url": "https://github.com/vercel-labs/agent-browser/releases/download/v0.7.6/agent-browser-darwin-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "vercel-labs/agent-browser",
+          "tag": "v0.7.6",
+          "name": "agent-browser-darwin-x64"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 693048,
+      "hash": "sha256",
+      "digest": "b4dfa9423ae65c9d5f837700a2ab6e6dbe8e55824f1e7d6ce70d8aeeb9216202",
+      "path": "agent-browser",
+      "providers": [
+        {
+          "url": "https://github.com/vercel-labs/agent-browser/releases/download/v0.7.6/agent-browser-linux-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "vercel-labs/agent-browser",
+          "tag": "v0.7.6",
+          "name": "agent-browser-linux-arm64"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 769104,
+      "hash": "sha256",
+      "digest": "55f0278f7783c19219a8a20d83609c9734af76d6d457610a2d8f113d6da9fff1",
+      "path": "agent-browser",
+      "providers": [
+        {
+          "url": "https://github.com/vercel-labs/agent-browser/releases/download/v0.7.6/agent-browser-linux-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "vercel-labs/agent-browser",
+          "tag": "v0.7.6",
+          "name": "agent-browser-linux-x64"
+        }
+      ]
+    }
+  }
+}
