@@ -1,0 +1,76 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=jdx/mise TAG=v2026.1.6",
+  "name": "mise",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 79168856,
+      "hash": "sha256",
+      "digest": "cdd4d43b7296311e1b7a33855ce420c7a0aff02e736f2a78ce80e0717c594fc2",
+      "path": "mise",
+      "providers": [
+        {
+          "url": "https://github.com/jdx/mise/releases/download/v2026.1.6/mise-v2026.1.6-linux-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "jdx/mise",
+          "tag": "v2026.1.6",
+          "name": "mise-v2026.1.6-linux-x64"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 73857848,
+      "hash": "sha256",
+      "digest": "cb6927546ab39a753898f1efa1c0451ea19a14fc18f47187675f2010cddcb5d9",
+      "path": "mise",
+      "providers": [
+        {
+          "url": "https://github.com/jdx/mise/releases/download/v2026.1.6/mise-v2026.1.6-linux-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "jdx/mise",
+          "tag": "v2026.1.6",
+          "name": "mise-v2026.1.6-linux-arm64"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 68796512,
+      "hash": "sha256",
+      "digest": "89d387556031312bf90aa544c91181ed2b6278583f2d5d43d5d9ee136e70beac",
+      "path": "mise",
+      "providers": [
+        {
+          "url": "https://github.com/jdx/mise/releases/download/v2026.1.6/mise-v2026.1.6-macos-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "jdx/mise",
+          "tag": "v2026.1.6",
+          "name": "mise-v2026.1.6-macos-x64"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 60546096,
+      "hash": "sha256",
+      "digest": "7a63c3c7dcf76d781bc931239d3b90fe2016b0591dd2e37f310076b75b552d44",
+      "path": "mise",
+      "providers": [
+        {
+          "url": "https://github.com/jdx/mise/releases/download/v2026.1.6/mise-v2026.1.6-macos-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "jdx/mise",
+          "tag": "v2026.1.6",
+          "name": "mise-v2026.1.6-macos-arm64"
+        }
+      ]
+    }
+  }
+}
