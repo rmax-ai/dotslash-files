@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PROG_NAME="$(basename "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 
 # Defaults
 DOTSLASH_INSTALL_DIR_DEFAULT=""
@@ -19,7 +20,7 @@ SKIP_MANIFEST_COPY=false
 SKIP_WRAPPER=false
 
 usage() {
-  cat <<EOF
+	cat <<EOF
 Usage: $PROG_NAME [OPTIONS] <query>
 
 Options:
@@ -37,108 +38,200 @@ EOF
 }
 
 logv() {
-  if [ "$VERBOSE" = true ]; then
-    echo "$@"
-  fi
+	if [ "$VERBOSE" = true ]; then
+		echo "$@"
+	fi
 }
 
 # simple POSIX argument parsing (portable)
 while [ $# -gt 0 ]; do
-  case "$1" in
-    -t|--target)
-      if [ $# -lt 2 ]; then
-        echo "Error: --target requires an argument"; usage; exit 1; fi
-      TARGET="$2"; shift 2;;
-    -y|--yes)
-      YES=true; shift;;
-    -f|--force)
-      FORCE=true; shift;;
-    --force-no-dotslash)
-      FORCE_NO_DOTSLASH=true; shift;;
-    -n|--no-fzf)
-      NO_FZF=true; shift;;
-    --no-wrapper)
-      NO_WRAPPER=true; shift;;
-    --append-path)
-      APPEND_PATH=true; shift;;
-    --dry-run)
-      DRY_RUN=true; shift;;
-    --verbose)
-      VERBOSE=true; shift;;
-    -h|--help)
-      usage; exit 0;;
-    --)
-      shift; break;;
-    -*)
-      echo "Invalid option: $1"; usage; exit 1;;
-    *)
-      if [ -z "${QUERY:-}" ]; then
-        QUERY="$1"; shift;
-      else
-        echo "Multiple queries not supported"; usage; exit 1;
-      fi;;
-  esac
+	case "$1" in
+	-t | --target)
+		if [ $# -lt 2 ]; then
+			echo "Error: --target requires an argument"
+			usage
+			exit 1
+		fi
+		TARGET="$2"
+		shift 2
+		;;
+	-y | --yes)
+		YES=true
+		shift
+		;;
+	-f | --force)
+		FORCE=true
+		shift
+		;;
+	--force-no-dotslash)
+		FORCE_NO_DOTSLASH=true
+		shift
+		;;
+	-n | --no-fzf)
+		NO_FZF=true
+		shift
+		;;
+	--no-wrapper)
+		NO_WRAPPER=true
+		shift
+		;;
+	--append-path)
+		APPEND_PATH=true
+		shift
+		;;
+	--dry-run)
+		DRY_RUN=true
+		shift
+		;;
+	--verbose)
+		VERBOSE=true
+		shift
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo "Invalid option: $1"
+		usage
+		exit 1
+		;;
+	*)
+		if [ -z "${QUERY:-}" ]; then
+			QUERY="$1"
+			shift
+		else
+			echo "Multiple queries not supported"
+			usage
+			exit 1
+		fi
+		;;
+	esac
 done
 
 # QUERY may have been set by the simple parser above
 if [ -z "${QUERY:-}" ]; then
-  if [ $# -lt 1 ]; then
-    echo "Error: missing query"
-    usage
-    exit 1
-  fi
-  QUERY="$1"
+	if [ $# -lt 1 ]; then
+		echo "Error: missing query"
+		usage
+		exit 1
+	fi
+	QUERY="$1"
 fi
 
-# Verify 'dotslash' presence unless skipped
-if [ "$FORCE_NO_DOTSLASH" = false ]; then
-  if ! command -v dotslash >/dev/null 2>&1; then
-    echo "Error: 'dotslash' not found on PATH."
-    echo "Hint: install the 'dotslash' runner or use --force-no-dotslash in constrained environments."
-    exit 3
-  fi
-fi
-# In tests we may want to skip this check by setting FORCE_NO_DOTSLASH or by invoking the script with the environment modified.
+# In tests we may want to skip dotslash verification by setting FORCE_NO_DOTSLASH or by invoking the script with the environment modified.
 
 # Repo root detection
 REPO_ROOT=""
 # Prefer git repo root when available
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
+	REPO_ROOT="$(git rev-parse --show-toplevel)"
 # If running inside a directory that contains a bin/ folder, prefer the current working directory
 elif [ -d "$(pwd)/bin" ]; then
-  REPO_ROOT="$(pwd)"
+	REPO_ROOT="$(pwd)"
 else
-  # fallback: script dir parent
-  REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
+	# fallback: script dir parent
+	REPO_ROOT="$(cd "$(dirname "$0")/.." >/dev/null 2>&1 && pwd)"
 fi
 logv "Repo root: $REPO_ROOT"
 
 # Resolve target directory
 resolve_target() {
-  if [ -n "${TARGET:-}" ]; then
-    echo "$TARGET"; return 0
-  fi
-  if [ -n "${DOTSLASH_INSTALL_DIR:-}" ]; then
-    echo "$DOTSLASH_INSTALL_DIR"; return 0
-  fi
-  if [ -n "${XDG_BIN_HOME:-}" ]; then
-    echo "$XDG_BIN_HOME"; return 0
-  fi
-  if [ -n "${XDG_DATA_HOME:-}" ]; then
-    echo "${XDG_DATA_HOME}/dotslash/bin"; return 0
-  fi
-  echo "$HOME/.dotslash/bin"
+	if [ -n "${TARGET:-}" ]; then
+		echo "$TARGET"
+		return 0
+	fi
+	if [ -n "${DOTSLASH_INSTALL_DIR:-}" ]; then
+		echo "$DOTSLASH_INSTALL_DIR"
+		return 0
+	fi
+	if [ -n "${XDG_BIN_HOME:-}" ]; then
+		echo "$XDG_BIN_HOME"
+		return 0
+	fi
+	if [ -n "${XDG_DATA_HOME:-}" ]; then
+		echo "${XDG_DATA_HOME}/dotslash/bin"
+		return 0
+	fi
+	echo "$HOME/.dotslash/bin"
 }
 
 TARGET="$(resolve_target)"
 logv "TARGET resolved to: $TARGET"
 
+# Ensure we have a usable 'dotslash' command.
+# If it's not already on PATH and --force-no-dotslash is not set, install our shim into the target dir as "dotslash".
+ensure_dotslash() {
+	if [ "$FORCE_NO_DOTSLASH" = true ]; then
+		logv "--force-no-dotslash set; skipping dotslash presence check"
+		return 0
+	fi
+
+	if command -v dotslash >/dev/null 2>&1; then
+		return 0
+	fi
+
+	shim_src="$SCRIPT_DIR/dotslash-shim"
+	if [ ! -f "$shim_src" ]; then
+		shim_src="$REPO_ROOT/scripts/dotslash-shim"
+	fi
+	shim_dst="$TARGET/dotslash"
+
+	if [ ! -f "$shim_src" ]; then
+		echo "Error: 'dotslash' not found on PATH and shim not found at $shim_src"
+		exit 3
+	fi
+
+	echo "Info: 'dotslash' not found on PATH; installing dotslash shim to $shim_dst"
+
+	if [ ! -d "$TARGET" ]; then
+		if [ "$DRY_RUN" = true ]; then
+			echo "Target directory does not exist; would run: mkdir -p \"$TARGET\""
+		else
+			mkdir -p "$TARGET" || {
+				echo "Error: could not create target directory '$TARGET'"
+				exit 11
+			}
+		fi
+	fi
+
+	if [ -e "$shim_dst" ] && [ "$FORCE" = false ]; then
+		if [ "$YES" = true ]; then
+			logv "Non-interactive: --yes provided; not overwriting existing $shim_dst"
+			return 0
+		fi
+		read -rp "A file already exists at $shim_dst. Overwrite with dotslash shim? (y/N) " yn
+		case "$yn" in
+		[Yy]*) ;;
+		*)
+			echo "Aborted"
+			exit 4
+			;;
+		esac
+	fi
+
+	if [ "$DRY_RUN" = true ]; then
+		echo "Would copy: $shim_src -> $shim_dst"
+	else
+		cp -p "$shim_src" "$shim_dst" || {
+			echo "Error: could not install dotslash shim"
+			exit 12
+		}
+		chmod 0755 "$shim_dst" || true
+	fi
+}
+
+ensure_dotslash
+
 # Manifest discovery
 BIN_DIR="$REPO_ROOT/bin"
 if [ ! -d "$BIN_DIR" ]; then
-  echo "Error: bin/ directory not found in repo root: $REPO_ROOT"
-  exit 2
+	echo "Error: bin/ directory not found in repo root: $REPO_ROOT"
+	exit 2
 fi
 
 # Build candidate list: arrays for names and paths
@@ -146,101 +239,108 @@ declare -a CAND_NAMES
 declare -a CAND_PATHS
 
 for f in "$BIN_DIR"/*.dotslash; do
-  [ -e "$f" ] || continue
-  # Skip symlinks in the repo to avoid following external files
-  if [ -L "$f" ]; then
-    echo "Warning: skipping symlink manifest $f"; continue
-  fi
-  name=""
-  if command -v jq >/dev/null 2>&1; then
-    # If jq is available, strip a leading shebang line and validate the remaining JSON
-    if head -n1 "$f" | grep -q '^#!'; then
-      content=$(tail -n +2 "$f" )
-    else
-      content=$(cat "$f")
-    fi
-    if ! printf '%s' "$content" | jq -e . >/dev/null 2>&1; then
-      echo "Warning: skipping malformed manifest $f"; continue
-    fi
-    name=$(printf '%s' "$content" | jq -r '.name // empty' 2>/dev/null || true)
-  fi
-  if [ -z "$name" ]; then
-    # conservative grep fallback to extract "name": "value"
-    if grep -q '"name"' "$f" 2>/dev/null; then
-      name=$(sed -n 's/.*"name"\s*:\s*\"\([^\"]*\)\".*/\1/p' "$f" | head -n1 || true)
-    fi
-  fi
-  if [ -z "$name" ]; then
-    name="$(basename "$f" .dotslash)"
-  fi
-  CAND_NAMES+=("$name")
-  CAND_PATHS+=("$f")
+	[ -e "$f" ] || continue
+	# Skip symlinks in the repo to avoid following external files
+	if [ -L "$f" ]; then
+		echo "Warning: skipping symlink manifest $f"
+		continue
+	fi
+	name=""
+	if command -v jq >/dev/null 2>&1; then
+		# If jq is available, strip a leading shebang line and validate the remaining JSON
+		if head -n1 "$f" | grep -q '^#!'; then
+			content=$(tail -n +2 "$f")
+		else
+			content=$(cat "$f")
+		fi
+		if ! printf '%s' "$content" | jq -e . >/dev/null 2>&1; then
+			echo "Warning: skipping malformed manifest $f"
+			continue
+		fi
+		name=$(printf '%s' "$content" | jq -r '.name // empty' 2>/dev/null || true)
+	fi
+	if [ -z "$name" ]; then
+		# conservative grep fallback to extract "name": "value"
+		if grep -q '"name"' "$f" 2>/dev/null; then
+			name=$(sed -n 's/.*"name"\s*:\s*\"\([^\"]*\)\".*/\1/p' "$f" | head -n1 || true)
+		fi
+	fi
+	if [ -z "$name" ]; then
+		name="$(basename "$f" .dotslash)"
+	fi
+	CAND_NAMES+=("$name")
+	CAND_PATHS+=("$f")
 done
 
 # Find matches: exact by name (collect all matches to handle duplicate .name values)
 declare -a MATCH_INDICES
 for i in "${!CAND_NAMES[@]}"; do
-  if [ "${CAND_NAMES[$i]}" = "$QUERY" ]; then
-    MATCH_INDICES+=($i)
-  fi
+	if [ "${CAND_NAMES[$i]}" = "$QUERY" ]; then
+		MATCH_INDICES+=($i)
+	fi
 done
 
 # If no exact match, try substring match on filename
 if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
-  for i in "${!CAND_PATHS[@]}"; do
-    fname="$(basename "${CAND_PATHS[$i]}")"
-    if echo "$fname" | grep -qi "$QUERY"; then
-      MATCH_INDICES+=($i)
-    fi
-  done
+	for i in "${!CAND_PATHS[@]}"; do
+		fname="$(basename "${CAND_PATHS[$i]}")"
+		if echo "$fname" | grep -qi "$QUERY"; then
+			MATCH_INDICES+=($i)
+		fi
+	done
 fi
 
 if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
-  echo "No manifests in 'bin/' match '$QUERY'. Try a different query; see top suggestions:" 
-  # suggest top 5
-  for i in $(seq 0 4); do
-    if [ $i -ge ${#CAND_NAMES[@]} ]; then break; fi
-    echo "  - ${CAND_NAMES[$i]}"
-  done
-  exit 2
+	echo "No manifests in 'bin/' match '$QUERY'. Try a different query; see top suggestions:"
+	# suggest top 5
+	for i in $(seq 0 4); do
+		if [ $i -ge ${#CAND_NAMES[@]} ]; then break; fi
+		echo "  - ${CAND_NAMES[$i]}"
+	done
+	exit 2
 fi
 
 # If multiple candidates, use fzf when available and not disabled; otherwise numeric selection fallback
 chosen_index=${MATCH_INDICES[0]}
 if [ ${#MATCH_INDICES[@]} -gt 1 ]; then
-  if [ "$NO_FZF" = false ] && command -v fzf >/dev/null 2>&1 && [ -t 0 ]; then
-    # Provide the matching file paths to fzf and let user select; preview using jq or sed
-    selection=$(for idx in "${MATCH_INDICES[@]}"; do printf '%s
+	if [ "$NO_FZF" = false ] && command -v fzf >/dev/null 2>&1 && [ -t 0 ]; then
+		# Provide the matching file paths to fzf and let user select; preview using jq or sed
+		selection=$(for idx in "${MATCH_INDICES[@]}"; do printf '%s
 ' "${CAND_PATHS[$idx]}"; done | fzf --preview 'jq -C . {} 2>/dev/null || sed -n "1,200p" {}' --ansi --border --prompt="Select manifest> " --select-1 --exit-0)
-    if [ -z "${selection:-}" ]; then
-      echo "Aborted"; exit 4
-    fi
-    # Map selection back to index
-    found="false"
-    for idx in "${MATCH_INDICES[@]}"; do
-      if [ "${CAND_PATHS[$idx]}" = "$selection" ]; then
-        chosen_index=$idx; found="true"; break
-      fi
-    done
-    if [ "$found" = "false" ]; then
-      echo "Selection not found"; exit 1
-    fi
-  else
-    echo "Multiple candidates found matching '$QUERY':"
-    for idx in "${MATCH_INDICES[@]}"; do
-      echo "  [$idx] ${CAND_NAMES[$idx]} - ${CAND_PATHS[$idx]}"
-    done
-    # If non-interactive, abort
-    if [ "$YES" = true ]; then
-      echo "Multiple candidates; non-interactive and --yes given: aborting."
-      exit 4
-    fi
-    read -rp "Select index: " sel
-    if ! echo "$sel" | grep -qE '^[0-9]+$'; then
-      echo "Invalid selection"; exit 1
-    fi
-    chosen_index=$sel
-  fi
+		if [ -z "${selection:-}" ]; then
+			echo "Aborted"
+			exit 4
+		fi
+		# Map selection back to index
+		found="false"
+		for idx in "${MATCH_INDICES[@]}"; do
+			if [ "${CAND_PATHS[$idx]}" = "$selection" ]; then
+				chosen_index=$idx
+				found="true"
+				break
+			fi
+		done
+		if [ "$found" = "false" ]; then
+			echo "Selection not found"
+			exit 1
+		fi
+	else
+		echo "Multiple candidates found matching '$QUERY':"
+		for idx in "${MATCH_INDICES[@]}"; do
+			echo "  [$idx] ${CAND_NAMES[$idx]} - ${CAND_PATHS[$idx]}"
+		done
+		# If non-interactive, abort
+		if [ "$YES" = true ]; then
+			echo "Multiple candidates; non-interactive and --yes given: aborting."
+			exit 4
+		fi
+		read -rp "Select index: " sel
+		if ! echo "$sel" | grep -qE '^[0-9]+$'; then
+			echo "Invalid selection"
+			exit 1
+		fi
+		chosen_index=$sel
+	fi
 fi
 
 CAND_NAME="${CAND_NAMES[$chosen_index]}"
@@ -250,152 +350,170 @@ BASE_NAME="$(basename "$CAND_PATH" .dotslash)"
 # Show manifest summary and confirm
 echo "Found candidate: $CAND_PATH (name: $CAND_NAME)"
 if [ "$DRY_RUN" = true ]; then
-  echo "Would install \"$CAND_NAME\" to $TARGET"
-  echo "- manifest: $TARGET/$BASE_NAME.dotslash"
-  if [ "$NO_WRAPPER" = false ]; then
-    echo "- wrapper:  $TARGET/$BASE_NAME"
-  fi
-  echo "No files were written."
-  exit 0
+	echo "Would install \"$CAND_NAME\" to $TARGET"
+	echo "- manifest: $TARGET/$BASE_NAME.dotslash"
+	if [ "$NO_WRAPPER" = false ]; then
+		echo "- wrapper:  $TARGET/$BASE_NAME"
+	fi
+	echo "No files were written."
+	exit 0
 fi
 
 # Check PATH collision
 if command -v "$BASE_NAME" >/dev/null 2>&1; then
-  existing_loc=$(command -v "$BASE_NAME")
-  echo "Warning: a command named '$BASE_NAME' exists on PATH at $existing_loc"
-  if [ "$YES" = true ]; then
-    logv "Non-interactive: --yes provided; proceeding despite PATH collision"
-  else
-    read -rp "Install '$BASE_NAME' anyway? (y/N) " yn
-    case "$yn" in
-      [Yy]*) ;;
-      *) echo "Aborted"; exit 4;;
-    esac
-  fi
+	existing_loc=$(command -v "$BASE_NAME")
+	echo "Warning: a command named '$BASE_NAME' exists on PATH at $existing_loc"
+	if [ "$YES" = true ]; then
+		logv "Non-interactive: --yes provided; proceeding despite PATH collision"
+	else
+		read -rp "Install '$BASE_NAME' anyway? (y/N) " yn
+		case "$yn" in
+		[Yy]*) ;;
+		*)
+			echo "Aborted"
+			exit 4
+			;;
+		esac
+	fi
 fi
 
 # ensure TARGET exists and is writable
 if [ ! -d "$TARGET" ]; then
-  if [ "$DRY_RUN" = true ]; then
-    echo "Target directory does not exist; would run: mkdir -p \"$TARGET\""
-  else
-    mkdir -p "$TARGET" || { echo "Error: could not create target directory '$TARGET'"; exit 11; }
-  fi
+	if [ "$DRY_RUN" = true ]; then
+		echo "Target directory does not exist; would run: mkdir -p \"$TARGET\""
+	else
+		mkdir -p "$TARGET" || {
+			echo "Error: could not create target directory '$TARGET'"
+			exit 11
+		}
+	fi
 fi
 
 # Copy manifest
 target_manifest="$TARGET/$BASE_NAME.dotslash"
 SKIP_MANIFEST_COPY=false
 if [ -e "$target_manifest" ]; then
-  if [ "$FORCE" = true ]; then
-    logv "Overwriting existing manifest: $target_manifest"
-  else
-    if [ "$YES" = true ]; then
-      logv "Non-interactive: --yes provided; not overwriting existing manifest; skipping copy."
-      SKIP_MANIFEST_COPY=true
-    else
-      read -rp "Target manifest exists at $target_manifest. Overwrite? (y/N) " yn
-      case "$yn" in
-        [Yy]*) ;;
-        *) echo "Aborted"; exit 4;;
-      esac
-    fi
-  fi
+	if [ "$FORCE" = true ]; then
+		logv "Overwriting existing manifest: $target_manifest"
+	else
+		if [ "$YES" = true ]; then
+			logv "Non-interactive: --yes provided; not overwriting existing manifest; skipping copy."
+			SKIP_MANIFEST_COPY=true
+		else
+			read -rp "Target manifest exists at $target_manifest. Overwrite? (y/N) " yn
+			case "$yn" in
+			[Yy]*) ;;
+			*)
+				echo "Aborted"
+				exit 4
+				;;
+			esac
+		fi
+	fi
 fi
 
 if [ "$DRY_RUN" = true ]; then
-  echo "Would copy: $CAND_PATH -> $target_manifest"
+	echo "Would copy: $CAND_PATH -> $target_manifest"
 else
-  if [ "$SKIP_MANIFEST_COPY" = true ]; then
-    logv "Skipping copy of existing manifest: $target_manifest"
-  else
-    cp -p "$CAND_PATH" "$target_manifest" || { echo "Error: could not copy manifest"; exit 12; }
-    chmod +x "$target_manifest" || true
-  fi
+	if [ "$SKIP_MANIFEST_COPY" = true ]; then
+		logv "Skipping copy of existing manifest: $target_manifest"
+	else
+		cp -p "$CAND_PATH" "$target_manifest" || {
+			echo "Error: could not copy manifest"
+			exit 12
+		}
+		chmod +x "$target_manifest" || true
+	fi
 fi
 
 # Create wrapper unless --no-wrapper
 if [ "$NO_WRAPPER" = false ]; then
-  wrapper="$TARGET/$BASE_NAME"
-  if [ -e "$wrapper" ]; then
-    if [ "$FORCE" = true ]; then
-      logv "Overwriting existing wrapper: $wrapper"
-    else
-      if [ "$YES" = true ]; then
-        logv "Non-interactive: --yes provided; not overwriting existing wrapper; skipping wrapper creation."
-        SKIP_WRAPPER=true
-      else
-        read -rp "Target wrapper exists at $wrapper. Overwrite? (y/N) " yn
-        case "$yn" in
-          [Yy]*) ;;
-          *) echo "Aborted"; exit 4;;
-        esac
-      fi
-    fi
-  fi
+	wrapper="$TARGET/$BASE_NAME"
+	if [ -e "$wrapper" ]; then
+		if [ "$FORCE" = true ]; then
+			logv "Overwriting existing wrapper: $wrapper"
+		else
+			if [ "$YES" = true ]; then
+				logv "Non-interactive: --yes provided; not overwriting existing wrapper; skipping wrapper creation."
+				SKIP_WRAPPER=true
+			else
+				read -rp "Target wrapper exists at $wrapper. Overwrite? (y/N) " yn
+				case "$yn" in
+				[Yy]*) ;;
+				*)
+					echo "Aborted"
+					exit 4
+					;;
+				esac
+			fi
+		fi
+	fi
 
-  if [ "$DRY_RUN" = true ]; then
-    echo "Would create wrapper: $wrapper"
-  else
-    if [ "$SKIP_WRAPPER" = true ]; then
-      logv "Skipping wrapper creation: $wrapper"
-    else
-      cat > "$wrapper" <<EOF
+	if [ "$DRY_RUN" = true ]; then
+		echo "Would create wrapper: $wrapper"
+	else
+		if [ "$SKIP_WRAPPER" = true ]; then
+			logv "Skipping wrapper creation: $wrapper"
+		else
+			cat >"$wrapper" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 DIR="\$(cd "\$(dirname "\${0}")" >/dev/null 2>&1 && pwd)"
+if [ -x "\$DIR/dotslash" ]; then
+  exec "\$DIR/dotslash" "\$DIR/$BASE_NAME.dotslash" "\$@"
+fi
 exec dotslash "\$DIR/$BASE_NAME.dotslash" "\$@"
 EOF
-      chmod 0755 "$wrapper"
-    fi
-  fi
+			chmod 0755 "$wrapper"
+		fi
+	fi
 fi
 
 # Success message
 echo "Installed \"$CAND_NAME\" to $TARGET"
 echo "- manifest: $target_manifest"
 if [ "$NO_WRAPPER" = false ]; then
-  echo "- wrapper:  $wrapper"
+	echo "- wrapper:  $wrapper"
 fi
 
 # PATH hint
 if ! echo "$PATH" | tr ':' '\n' | grep -xq "$TARGET"; then
-  echo "\nIf $TARGET is not on your PATH, add it:" 
-  echo "  export PATH=\"$TARGET:\$PATH\""
-  if [ "$APPEND_PATH" = true ]; then
-    # Detect shell and candidate rc file
-    RC=""
-    case "$(basename "${SHELL:-/bin/sh}")" in
-      zsh) RC="$HOME/.zshrc";;
-      bash)
-        # On macOS prefer ~/.bash_profile if present
-        if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ -f "$HOME/.bash_profile" ]; then
-          RC="$HOME/.bash_profile"
-        else
-          RC="$HOME/.bashrc"
-        fi
-        ;;
-      *) RC="$HOME/.profile";;
-    esac
-    echo "\n--append-path requested: would append export line to $RC"
-    if [ "$DRY_RUN" = true ]; then
-      echo "Would write to $RC: \n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\""
-    else
-      if [ ! -w "$RC" ] && [ -e "$RC" ]; then
-        echo "Warning: $RC is not writable. Please add the following line to your shell rc file:" 
-        echo "# added by dotslash-install"
-        echo "export PATH=\"$TARGET:\$PATH\""
-      else
-        # Append idempotently
-        if ! grep -Fq "# added by dotslash-install" "$RC" 2>/dev/null; then
-          printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\"\n" >> "$RC" || { echo "Warning: failed to write to $RC"; }
-          echo "Wrote export line to $RC (# added by dotslash-install)"
-        else
-          echo "$RC already appears to contain an exported PATH entry from dotslash-install; skipping append."
-        fi
-      fi
-    fi
-  fi
+	echo "\nIf $TARGET is not on your PATH, add it:"
+	echo "  export PATH=\"$TARGET:\$PATH\""
+	if [ "$APPEND_PATH" = true ]; then
+		# Detect shell and candidate rc file
+		RC=""
+		case "$(basename "${SHELL:-/bin/sh}")" in
+		zsh) RC="$HOME/.zshrc" ;;
+		bash)
+			# On macOS prefer ~/.bash_profile if present
+			if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ -f "$HOME/.bash_profile" ]; then
+				RC="$HOME/.bash_profile"
+			else
+				RC="$HOME/.bashrc"
+			fi
+			;;
+		*) RC="$HOME/.profile" ;;
+		esac
+		echo "\n--append-path requested: would append export line to $RC"
+		if [ "$DRY_RUN" = true ]; then
+			echo "Would write to $RC: \n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\""
+		else
+			if [ ! -w "$RC" ] && [ -e "$RC" ]; then
+				echo "Warning: $RC is not writable. Please add the following line to your shell rc file:"
+				echo "# added by dotslash-install"
+				echo "export PATH=\"$TARGET:\$PATH\""
+			else
+				# Append idempotently
+				if ! grep -Fq "# added by dotslash-install" "$RC" 2>/dev/null; then
+					printf "\n# added by dotslash-install\nexport PATH=\"$TARGET:\$PATH\"\n" >>"$RC" || { echo "Warning: failed to write to $RC"; }
+					echo "Wrote export line to $RC (# added by dotslash-install)"
+				else
+					echo "$RC already appears to contain an exported PATH entry from dotslash-install; skipping append."
+				fi
+			fi
+		fi
+	fi
 fi
 
 exit 0

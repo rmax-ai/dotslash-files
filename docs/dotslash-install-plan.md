@@ -33,7 +33,7 @@ Usability principles
 High-level UX flow (concise)
 ----------------------------
 1. Parse CLI args; show `--help` if missing/invalid.
-2. Verify presence of `dotslash` in PATH; if missing, print an actionable suggestion and exit unless `--force-no-dotslash` is used.
+2. Verify presence of `dotslash` in PATH; if missing, install `scripts/dotslash-shim` into the target dir as `dotslash` (unless `--force-no-dotslash` is used).
 3. Check for PATH collision: `command -v <query>`; warn and require confirmation to proceed unless `--yes`.
 4. Locate candidates in `bin/`:
    - Fast exact-match using manifest "name" field if present.
