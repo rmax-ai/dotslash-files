@@ -81,18 +81,16 @@ if command -v dotslash >/dev/null 2>&1; then
   exit 1
 fi
 
-# Run the installer expecting exit code 3
-set +e
-(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" demo-tool)
-STATUS=$?
-set -e
-if [ $STATUS -ne 3 ]; then
-  echo "Test failed: expected exit code 3 when dotslash missing, got $STATUS"
+# Run the installer; it should install a local dotslash shim into the target and succeed.
+(cd "$REPO_ROOT" && "$SCRIPTS_DIR/dotslash-install" --force demo-tool)
+
+if [ ! -x "$DOTSLASH_INSTALL_DIR/dotslash" ]; then
+  echo "Test failed: expected dotslash shim installed at $DOTSLASH_INSTALL_DIR/dotslash"
   PATH="$ORIG_PATH"
   exit 1
 fi
 
-echo "Test 2 passed: missing dotslash behavior"
+echo "Test 2 passed: missing dotslash auto-shim install"
 
 # Restore PATH for subsequent tests
 PATH="$ORIG_PATH"

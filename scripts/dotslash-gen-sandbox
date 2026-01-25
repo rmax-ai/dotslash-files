@@ -23,14 +23,14 @@ GH_DOTSLASH=$(find bin -name "*cli-cli*.dotslash" | head -n 1)
 JQ_DOTSLASH=$(find bin -name "*jqlang-jq*.dotslash" | head -n 1)
 
 if [[ -z "$OPENCODE_DOTSLASH" ]]; then
-    echo "Error: opencode dotslash file not found in bin/" >&2
-    exit 1
+	echo "Error: opencode dotslash file not found in bin/" >&2
+	exit 1
 fi
 
 if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
-    echo "Found opencode: $OPENCODE_DOTSLASH" >&2
-    [[ -n "$GH_DOTSLASH" ]] && echo "Found gh: $GH_DOTSLASH" >&2
-    [[ -n "$JQ_DOTSLASH" ]] && echo "Found jq: $JQ_DOTSLASH" >&2
+	echo "Found opencode: $OPENCODE_DOTSLASH" >&2
+	[[ -n "$GH_DOTSLASH" ]] && echo "Found gh: $GH_DOTSLASH" >&2
+	[[ -n "$JQ_DOTSLASH" ]] && echo "Found jq: $JQ_DOTSLASH" >&2
 fi
 
 # 2. Create a temporary directory for shims
@@ -39,8 +39,8 @@ fi
 # to /work/bin/...
 TMP_BIN=$(mktemp -d)
 cleanup() {
-    rm -rf "$TMP_BIN"
-    [[ -n "${ENTRYPOINT_SH:-}" ]] && rm -f "$ENTRYPOINT_SH"
+	rm -rf "$TMP_BIN"
+	[[ -n "${ENTRYPOINT_SH:-}" ]] && rm -f "$ENTRYPOINT_SH"
 }
 trap cleanup EXIT
 
@@ -49,30 +49,30 @@ trap cleanup EXIT
 ln -s "/work/bin/$(basename "$OPENCODE_DOTSLASH")" "$TMP_BIN/opencode"
 
 if [[ -n "$GH_DOTSLASH" ]]; then
-    ln -s "/work/bin/$(basename "$GH_DOTSLASH")" "$TMP_BIN/gh"
+	ln -s "/work/bin/$(basename "$GH_DOTSLASH")" "$TMP_BIN/gh"
 fi
 
 if [[ -n "$JQ_DOTSLASH" ]]; then
-    ln -s "/work/bin/$(basename "$JQ_DOTSLASH")" "$TMP_BIN/jq"
+	ln -s "/work/bin/$(basename "$JQ_DOTSLASH")" "$TMP_BIN/jq"
 fi
 
 # 3. Set up sandbox environment variables
 # - GITHUB_TOKEN: required for 'gh' and 'opencode' inside the sandbox.
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-    # Attempt to retrieve token from host gh if available
-    if command -v gh >/dev/null 2>&1; then
-        [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Retrieving GITHUB_TOKEN from host gh..." >&2
-        GITHUB_TOKEN=$(gh auth token 2>/dev/null || true)
-    fi
+	# Attempt to retrieve token from host gh if available
+	if command -v gh >/dev/null 2>&1; then
+		[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Retrieving GITHUB_TOKEN from host gh..." >&2
+		GITHUB_TOKEN=$(gh auth token 2>/dev/null || true)
+	fi
 
-    if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-        echo "Error: GITHUB_TOKEN is not set." >&2
-        echo "The sandbox environment does not have access to your host's keychain." >&2
-        echo "Please set it: export GITHUB_TOKEN=\$(gh auth token)" >&2
-        exit 1
-    fi
-    export GITHUB_TOKEN
-    [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "GITHUB_TOKEN set successfully." >&2
+	if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+		echo "Error: GITHUB_TOKEN is not set." >&2
+		echo "The sandbox environment does not have access to your host's keychain." >&2
+		echo "Please set it: export GITHUB_TOKEN=\$(gh auth token)" >&2
+		exit 1
+	fi
+	export GITHUB_TOKEN
+	[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "GITHUB_TOKEN set successfully." >&2
 fi
 
 # - SANDBOX_ADDITIONAL_PATH: mounted as /extra_bin and added to PATH
@@ -86,8 +86,8 @@ export SANDBOX_ENV="OPENCODE_CMD OPENCODE_CMD_ARGS ${SANDBOX_ENV:-}"
 export SANDBOX_OUTPUT="${SANDBOX_OUTPUT:-$PWD}"
 
 if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
-    # Use --print-logs for verbosity in opencode run
-    export OPENCODE_CMD_ARGS="${OPENCODE_CMD_ARGS:-} --print-logs --log-level INFO"
+	# Use --print-logs for verbosity in opencode run
+	export OPENCODE_CMD_ARGS="${OPENCODE_CMD_ARGS:-} --print-logs --log-level INFO"
 fi
 
 # 4. Handle output path
@@ -95,26 +95,26 @@ fi
 # We encourage the user to use /output, or we could potentially inject it.
 has_output=false
 for arg in "$@"; do
-    if [[ "$arg" == output=* ]]; then
-        has_output=true
-        break
-    fi
+	if [[ "$arg" == output=* ]]; then
+		has_output=true
+		break
+	fi
 done
 
 if [[ "$has_output" == "false" ]]; then
-    echo "Note: Running in sandbox. The current directory (/work) is read-only." >&2
-    echo "Hint: Use 'output=/output/filename.dotslash' to save the result to the host." >&2
+	echo "Note: Running in sandbox. The current directory (/work) is read-only." >&2
+	echo "Hint: Use 'output=/output/filename.dotslash' to save the result to the host." >&2
 fi
 
 if [[ "$DOTSLASH_VERBOSE" == "1" ]]; then
-    echo "Running dotslash-sandbox for dotslash-gen..." >&2
+	echo "Running dotslash-sandbox for dotslash-gen..." >&2
 fi
 
 # 5. Create a container entrypoint script
 # This script runs inside the container and sets up a writable workspace.
 ENTRYPOINT_SH=$(mktemp /tmp/dotslash-gen-entrypoint.XXXXXX)
 chmod +x "$ENTRYPOINT_SH"
-cat <<'EOF' > "$ENTRYPOINT_SH"
+cat <<'EOF' >"$ENTRYPOINT_SH"
 #!/usr/bin/env bash
 set -euo pipefail
 

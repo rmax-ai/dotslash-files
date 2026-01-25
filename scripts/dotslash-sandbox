@@ -18,7 +18,8 @@ set -euo pipefail
 #
 # Keep the help text and usage examples in the top-of-file HELP block below.
 
-HELP=$(cat <<'EOF'
+HELP=$(
+	cat <<'EOF'
 Dotslash Sandbox - Run a .dotslash file in a Podman container.
 
 Usage:
@@ -46,13 +47,13 @@ EOF
 
 # Print help if requested
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    echo "$HELP" >&2
-    exit 0
+	echo "$HELP" >&2
+	exit 0
 fi
 
 if [[ $# -lt 1 ]]; then
-    echo "$HELP" >&2
-    exit 1
+	echo "$HELP" >&2
+	exit 1
 fi
 
 DOTSLASH_FILE="$1"
@@ -76,29 +77,28 @@ SANDBOX_PLATFORM="${SANDBOX_PLATFORM:-}"
 # Normalize host platform (linux/amd64, linux/arm64)
 HOST_UNAME="$(uname -m)"
 case "$HOST_UNAME" in
-    x86_64|amd64) HOST_PLATFORM="linux/amd64" ;;
-    aarch64|arm64) HOST_PLATFORM="linux/arm64" ;;
-    *) HOST_PLATFORM="linux/$(echo "$HOST_UNAME" | tr A-Z a-z)" ;;
+x86_64 | amd64) HOST_PLATFORM="linux/amd64" ;;
+aarch64 | arm64) HOST_PLATFORM="linux/arm64" ;;
+*) HOST_PLATFORM="linux/$(echo "$HOST_UNAME" | tr A-Z a-z)" ;;
 esac
 
 # If SANDBOX_PLATFORM is explicitly set and differs from the host, handle
 # mismatch according to SANDBOX_ALLOW_EMULATION.
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
-    if [[ "$SANDBOX_PLATFORM" != "$HOST_PLATFORM" ]]; then
-        if [[ "${SANDBOX_ALLOW_EMULATION:-}" != "1" ]]; then
-            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Note: requested platform '$SANDBOX_PLATFORM' differs from host '$HOST_PLATFORM'." >&2
-            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Defaulting to host platform '$HOST_PLATFORM' to avoid emulation." >&2
-            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Set SANDBOX_ALLOW_EMULATION=1 to permit running '$SANDBOX_PLATFORM' via emulation." >&2
-            # Unset SANDBOX_PLATFORM so we don't pass --platform to podman
-            SANDBOX_PLATFORM=""
-        else
-            [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using requested platform via emulation: $SANDBOX_PLATFORM" >&2
-        fi
-    else
-        [[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using platform: $SANDBOX_PLATFORM"
-    fi
+	if [[ "$SANDBOX_PLATFORM" != "$HOST_PLATFORM" ]]; then
+		if [[ "${SANDBOX_ALLOW_EMULATION:-}" != "1" ]]; then
+			[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Note: requested platform '$SANDBOX_PLATFORM' differs from host '$HOST_PLATFORM'." >&2
+			[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Defaulting to host platform '$HOST_PLATFORM' to avoid emulation." >&2
+			[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Set SANDBOX_ALLOW_EMULATION=1 to permit running '$SANDBOX_PLATFORM' via emulation." >&2
+			# Unset SANDBOX_PLATFORM so we don't pass --platform to podman
+			SANDBOX_PLATFORM=""
+		else
+			[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using requested platform via emulation: $SANDBOX_PLATFORM" >&2
+		fi
+	else
+		[[ "$DOTSLASH_VERBOSE" == "1" ]] && echo "Using platform: $SANDBOX_PLATFORM"
+	fi
 fi
-
 
 # Resolve absolute path of the dotslash file and its directory
 ABS_FILE_PATH=$(realpath "$DOTSLASH_FILE")
@@ -118,9 +118,9 @@ SHIM_PATH="$(realpath "$(dirname "$0")/dotslash-shim")"
 # SANDBOX_PLATFORM was accepted above -- see logic above). This must happen
 # before we create the platform-specific cache directory.
 if [[ -n "$SANDBOX_PLATFORM" ]]; then
-    EFFECTIVE_PLATFORM="$SANDBOX_PLATFORM"
+	EFFECTIVE_PLATFORM="$SANDBOX_PLATFORM"
 else
-    EFFECTIVE_PLATFORM="$HOST_PLATFORM"
+	EFFECTIVE_PLATFORM="$HOST_PLATFORM"
 fi
 
 # Use a platform-specific cache directory to avoid cross-platform issues
@@ -144,56 +144,56 @@ trap 'rm -rf "$HOST_TMP_HOME"' EXIT
 
 # Base container command
 PODMAN_ARGS=(
-    run --rm -it
-    --userns=keep-id
-    --security-opt=no-new-privileges
-    --cap-drop=all
-    --read-only
-    --tmpfs /tmp
-    --cpus=1.0
-    --pids-limit=128
-    -v "$PWD:$WORK_DIR:ro"
-    -v "$ABS_FILE_PATH:/target/$FILE_NAME:ro"
-    -v "$SHIM_PATH:/usr/local/bin/dotslash:ro"
-    -v "$HOST_CACHE:$CONTAINER_CACHE"
-    -v "$HOST_BIN_CACHE:$CONTAINER_BIN"
-    -v "$HOST_TMP_HOME:$CONTAINER_HOME:rw"
-    -e "DOTSLASH_CACHE=$CONTAINER_CACHE"
-    -e "USER=$(whoami)"
-    -e "HOME=$CONTAINER_HOME"
-    -e "TERM=${TERM:-xterm-256color}"
-    -w "$WORK_DIR"
+	run --rm -it
+	--userns=keep-id
+	--security-opt=no-new-privileges
+	--cap-drop=all
+	--read-only
+	--tmpfs /tmp
+	--cpus=1.0
+	--pids-limit=128
+	-v "$PWD:$WORK_DIR:ro"
+	-v "$ABS_FILE_PATH:/target/$FILE_NAME:ro"
+	-v "$SHIM_PATH:/usr/local/bin/dotslash:ro"
+	-v "$HOST_CACHE:$CONTAINER_CACHE"
+	-v "$HOST_BIN_CACHE:$CONTAINER_BIN"
+	-v "$HOST_TMP_HOME:$CONTAINER_HOME:rw"
+	-e "DOTSLASH_CACHE=$CONTAINER_CACHE"
+	-e "USER=$(whoami)"
+	-e "HOME=$CONTAINER_HOME"
+	-e "TERM=${TERM:-xterm-256color}"
+	-w "$WORK_DIR"
 )
 
 # Handle offline mode
 if [[ -n "$SANDBOX_OFFLINE" ]]; then
-    PODMAN_ARGS+=( --network none )
+	PODMAN_ARGS+=(--network none)
 fi
 
 # Handle environment passthrough
 for var in $SANDBOX_ENV; do
-    PODMAN_ARGS+=( -e "$var" )
+	PODMAN_ARGS+=(-e "$var")
 done
 
 # Handle output mount
 if [[ -n "$SANDBOX_OUTPUT" ]]; then
-    ABS_OUTPUT=$(realpath "$SANDBOX_OUTPUT")
-    mkdir -p "$ABS_OUTPUT"
-    PODMAN_ARGS+=( -v "$ABS_OUTPUT:/output:rw" )
+	ABS_OUTPUT=$(realpath "$SANDBOX_OUTPUT")
+	mkdir -p "$ABS_OUTPUT"
+	PODMAN_ARGS+=(-v "$ABS_OUTPUT:/output:rw")
 fi
 
 # Handle optional bin directory
 ENV_PATH="$CONTAINER_BIN:$WORK_DIR:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 if [[ -n "$SANDBOX_ADDITIONAL_PATH" ]]; then
-    ABS_ADDITIONAL_PATH=$(realpath "$SANDBOX_ADDITIONAL_PATH")
-    CONTAINER_ADDITIONAL_PATH="/extra_bin"
-    PODMAN_ARGS+=( -v "$ABS_ADDITIONAL_PATH:$CONTAINER_ADDITIONAL_PATH:ro" )
-    ENV_PATH="$CONTAINER_ADDITIONAL_PATH:$ENV_PATH"
+	ABS_ADDITIONAL_PATH=$(realpath "$SANDBOX_ADDITIONAL_PATH")
+	CONTAINER_ADDITIONAL_PATH="/extra_bin"
+	PODMAN_ARGS+=(-v "$ABS_ADDITIONAL_PATH:$CONTAINER_ADDITIONAL_PATH:ro")
+	ENV_PATH="$CONTAINER_ADDITIONAL_PATH:$ENV_PATH"
 fi
 
 if [[ -n "$SANDBOX_OUTPUT" ]]; then
-    ENV_PATH="/output:$ENV_PATH"
+	ENV_PATH="/output:$ENV_PATH"
 fi
 
 # Run the container
@@ -204,5 +204,5 @@ SANDBOX_IMAGE="${SANDBOX_IMAGE:-fedora:latest}"
 # Always specify the platform to avoid mismatched image warnings and ensure
 # we use the intended architecture (either host default or requested emulation).
 "$PODMAN_BIN" "${PODMAN_ARGS[@]}" --platform "$EFFECTIVE_PLATFORM" \
-    --env "PATH=$ENV_PATH" \
-    "$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"
+	--env "PATH=$ENV_PATH" \
+	"$SANDBOX_IMAGE" "/target/$FILE_NAME" "$@"

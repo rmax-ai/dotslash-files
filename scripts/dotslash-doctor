@@ -69,23 +69,23 @@ for platform in $platforms; do
 	if [[ -n "$format" ]]; then
 		listing_file="$tmp_dir/$platform-listing.txt"
 		case "$format" in
-			tar.gz|tgz|tar.xz|tar.bz2|tar|tar.zst)
-				tar -tf "$download_path" > "$listing_file"
-				;;
-			zip)
-				unzip -l "$download_path" | awk '/----/ {p=1; next} p && !/----/ && NF > 3 {print $NF}' > "$listing_file"
-				;;
-			gz|xz|bz2|zst)
-				# Single compressed file. Path is usually not needed or is the filename minus extension.
-				# But DotSlash usually uses the 'path' as the filename to extract into.
-				if [[ -z "$new_path" ]]; then
-					new_path="$name"
-				fi
-				echo "$new_path" > "$listing_file"
-				;;
-			*)
-				echo "    Warning: Unsupported format $format for path verification."
-				;;
+		tar.gz | tgz | tar.xz | tar.bz2 | tar | tar.zst)
+			tar -tf "$download_path" >"$listing_file"
+			;;
+		zip)
+			unzip -l "$download_path" | awk '/----/ {p=1; next} p && !/----/ && NF > 3 {print $NF}' >"$listing_file"
+			;;
+		gz | xz | bz2 | zst)
+			# Single compressed file. Path is usually not needed or is the filename minus extension.
+			# But DotSlash usually uses the 'path' as the filename to extract into.
+			if [[ -z "$new_path" ]]; then
+				new_path="$name"
+			fi
+			echo "$new_path" >"$listing_file"
+			;;
+		*)
+			echo "    Warning: Unsupported format $format for path verification."
+			;;
 		esac
 
 		if [[ -f "$listing_file" ]] && [[ "$format" != "gz" && "$format" != "xz" && "$format" != "bz2" && "$format" != "zst" ]]; then
@@ -115,7 +115,11 @@ for platform in $platforms; do
 done
 
 # Write back to file
-(echo "#!/usr/bin/env dotslash"; echo; echo "$new_json" | jq .) > "$input_file.tmp"
+(
+	echo "#!/usr/bin/env dotslash"
+	echo
+	echo "$new_json" | jq .
+) >"$input_file.tmp"
 mv "$input_file.tmp" "$input_file"
 chmod +x "$input_file"
 

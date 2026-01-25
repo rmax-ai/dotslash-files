@@ -12,7 +12,7 @@ echo "========================================"
 
 # Check dependencies
 if ! command -v podman >/dev/null 2>&1; then
-    echo "Warning: podman not found. Sandbox-based tests will be skipped."
+  echo "Warning: podman not found. Sandbox-based tests will be skipped."
 fi
 
 # Run Shim tests

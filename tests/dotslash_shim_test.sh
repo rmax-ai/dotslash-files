@@ -14,8 +14,8 @@ FIXTURE="tests/fixtures/install_shim.dotslash"
 
 # Check if podman is available
 if ! command -v podman >/dev/null 2>&1; then
-    echo "podman not found, skipping tests."
-    exit 0
+  echo "podman not found, skipping tests."
+  exit 0
 fi
 
 # Create a temporary directory for mocks inside the workspace to avoid mount issues on macOS
@@ -33,7 +33,7 @@ echo "Starting dotslash-shim tests..."
 
 # 1. Test DOTSLASH_BIN: Directly run a provided binary without installation
 echo "[Test 1] DOTSLASH_BIN override"
-cat > "$MOCK_DIR/fake-dotslash" <<'EOF'
+cat >"$MOCK_DIR/fake-dotslash" <<'EOF'
 #!/bin/sh
 echo "Fake dotslash called with args: $@"
 EOF
@@ -42,20 +42,20 @@ chmod +x "$MOCK_DIR/fake-dotslash"
 export SANDBOX_ADDITIONAL_PATH="$MOCK_DIR"
 export SANDBOX_ENV="DOTSLASH_BIN"
 export DOTSLASH_BIN="/extra_bin/fake-dotslash"
-OUTPUT=$( "$SANDBOX" "$FIXTURE" test_arg 2>&1 )
+OUTPUT=$("$SANDBOX" "$FIXTURE" test_arg 2>&1)
 
 if [[ "$OUTPUT" == *"Fake dotslash called with args: --from-install test_arg"* ]]; then
-    echo "✓ DOTSLASH_BIN override passed"
+  echo "✓ DOTSLASH_BIN override passed"
 else
-    echo "✗ DOTSLASH_BIN override failed"
-    echo "Output was: $OUTPUT"
-    exit 1
+  echo "✗ DOTSLASH_BIN override failed"
+  echo "Output was: $OUTPUT"
+  exit 1
 fi
 
 # 2. Test installation trigger and DOTSLASH_CACHE_DIR
 echo "[Test 2] DOTSLASH_CACHE_DIR and installation"
 # Mock curl to "download" a fake tarball
-cat > "$MOCK_DIR/curl" <<'EOF'
+cat >"$MOCK_DIR/curl" <<'EOF'
 #!/bin/sh
 # Robustly find URL and output file in curl arguments
 while [ $# -gt 0 ]; do
@@ -83,15 +83,15 @@ export DOTSLASH_SKIP_VERIFY="1"
 export DOTSLASH_VERBOSE="1"
 unset DOTSLASH_BIN # Ensure we don't use the previous test's BIN
 
-OUTPUT=$( "$SANDBOX" "$FIXTURE" 2>&1 ) || EXIT_CODE=$?
+OUTPUT=$("$SANDBOX" "$FIXTURE" 2>&1) || EXIT_CODE=$?
 echo "Exit code: ${EXIT_CODE:-0}"
 
 if [[ "$OUTPUT" == *"[dotslash-shim] Installing dotslash"* ]] && [[ "$OUTPUT" == *"Mock binary executed"* ]]; then
-    echo "✓ DOTSLASH_CACHE_DIR and installation passed"
+  echo "✓ DOTSLASH_CACHE_DIR and installation passed"
 else
-    echo "✗ DOTSLASH_CACHE_DIR and installation failed"
-    echo "Output was: $OUTPUT"
-    exit 1
+  echo "✗ DOTSLASH_CACHE_DIR and installation failed"
+  echo "Output was: $OUTPUT"
+  exit 1
 fi
 
 # 3. Test DOTSLASH_VERSION
@@ -102,14 +102,14 @@ export SANDBOX_ENV="DOTSLASH_VERSION DOTSLASH_SKIP_VERIFY DOTSLASH_CACHE_DIR DOT
 export DOTSLASH_SKIP_VERIFY="1"
 export DOTSLASH_VERBOSE="1"
 
-OUTPUT=$( "$SANDBOX" "$FIXTURE" 2>&1 ) || true
+OUTPUT=$("$SANDBOX" "$FIXTURE" 2>&1) || true
 
 if [[ "$OUTPUT" == *"Mock curl downloading from https://github.com/facebook/dotslash/releases/download/v1.2.3-test/"* ]]; then
-    echo "✓ DOTSLASH_VERSION passed"
+  echo "✓ DOTSLASH_VERSION passed"
 else
-    echo "✗ DOTSLASH_VERSION failed"
-    echo "Output was: $OUTPUT"
-    exit 1
+  echo "✗ DOTSLASH_VERSION failed"
+  echo "Output was: $OUTPUT"
+  exit 1
 fi
 
 echo "All dotslash-shim tests passed!"

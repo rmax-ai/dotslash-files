@@ -230,7 +230,7 @@ OPENCODE_CMD=${OPENCODE_CMD:-opencode run}
 OPENCODE_CMD_ARGS=${OPENCODE_CMD_ARGS:-}
 if [[ -n "$OPENCODE_CMD_ARGS" ]]; then
 	# Split into an array so whitespace-separated args are handled properly
-	read -r -a OPENCODE_CMD_ARGS_ARR <<< "$OPENCODE_CMD_ARGS"
+	read -r -a OPENCODE_CMD_ARGS_ARR <<<"$OPENCODE_CMD_ARGS"
 else
 	OPENCODE_CMD_ARGS_ARR=()
 fi
