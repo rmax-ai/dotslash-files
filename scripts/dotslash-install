@@ -12,6 +12,7 @@ FORCE=false
 FORCE_NO_DOTSLASH=false
 NO_FZF=false
 NO_WRAPPER=false
+declare -a ALIASES
 APPEND_PATH=false
 DRY_RUN=false
 VERBOSE=false
@@ -30,6 +31,7 @@ Options:
   --force-no-dotslash    Skip verifying that 'dotslash' is present in PATH
   -n, --no-fzf           Disable fzf and use numbered selection fallback
   --no-wrapper           Install only the manifest (do not create the executable wrapper)
+	--alias NAME           Create a symlink NAME pointing at the installed wrapper (repeatable)
   --append-path          Append export PATH line to the detected shell rc (explicit opt-in)
   --dry-run              Show what would happen and exit
   --verbose              Print diagnostic messages during execution
@@ -74,6 +76,15 @@ while [ $# -gt 0 ]; do
 	--no-wrapper)
 		NO_WRAPPER=true
 		shift
+		;;
+	--alias)
+		if [ $# -lt 2 ]; then
+			echo "Error: --alias requires an argument"
+			usage
+			exit 1
+		fi
+		ALIASES+=("$2")
+		shift 2
 		;;
 	--append-path)
 		APPEND_PATH=true
@@ -280,7 +291,16 @@ for i in "${!CAND_NAMES[@]}"; do
 	fi
 done
 
-# If no exact match, try substring match on filename
+# If no exact match, try substring match on manifest name
+if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
+	for i in "${!CAND_NAMES[@]}"; do
+		if printf '%s' "${CAND_NAMES[$i]}" | grep -qi "$QUERY"; then
+			MATCH_INDICES+=($i)
+		fi
+	done
+fi
+
+# If still no match, try substring match on filename
 if [ ${#MATCH_INDICES[@]} -eq 0 ]; then
 	for i in "${!CAND_PATHS[@]}"; do
 		fname="$(basename "${CAND_PATHS[$i]}")"
@@ -345,28 +365,52 @@ fi
 
 CAND_NAME="${CAND_NAMES[$chosen_index]}"
 CAND_PATH="${CAND_PATHS[$chosen_index]}"
-BASE_NAME="$(basename "$CAND_PATH" .dotslash)"
+INSTALL_NAME="$CAND_NAME"
+
+if [ -z "$INSTALL_NAME" ]; then
+	echo "Error: could not determine tool name for manifest: $CAND_PATH"
+	exit 1
+fi
+
+if [ "$NO_WRAPPER" = true ] && [ ${#ALIASES[@]} -gt 0 ]; then
+	echo "Error: --alias requires wrapper installation (do not use --no-wrapper)"
+	exit 1
+fi
+
+for a in "${ALIASES[@]}"; do
+	if [ -z "$a" ]; then
+		echo "Error: --alias cannot be empty"
+		exit 1
+	fi
+	if [ "$a" = "$INSTALL_NAME" ]; then
+		echo "Error: --alias '$a' conflicts with installed command name"
+		exit 1
+	fi
+done
 
 # Show manifest summary and confirm
 echo "Found candidate: $CAND_PATH (name: $CAND_NAME)"
 if [ "$DRY_RUN" = true ]; then
 	echo "Would install \"$CAND_NAME\" to $TARGET"
-	echo "- manifest: $TARGET/$BASE_NAME.dotslash"
+	echo "- manifest: $TARGET/$INSTALL_NAME.dotslash"
 	if [ "$NO_WRAPPER" = false ]; then
-		echo "- wrapper:  $TARGET/$BASE_NAME"
+		echo "- wrapper:  $TARGET/$INSTALL_NAME"
+		for a in "${ALIASES[@]}"; do
+			echo "- alias:    $TARGET/$a -> $INSTALL_NAME"
+		done
 	fi
 	echo "No files were written."
 	exit 0
 fi
 
 # Check PATH collision
-if command -v "$BASE_NAME" >/dev/null 2>&1; then
-	existing_loc=$(command -v "$BASE_NAME")
-	echo "Warning: a command named '$BASE_NAME' exists on PATH at $existing_loc"
+if command -v "$INSTALL_NAME" >/dev/null 2>&1; then
+	existing_loc=$(command -v "$INSTALL_NAME")
+	echo "Warning: a command named '$INSTALL_NAME' exists on PATH at $existing_loc"
 	if [ "$YES" = true ]; then
 		logv "Non-interactive: --yes provided; proceeding despite PATH collision"
 	else
-		read -rp "Install '$BASE_NAME' anyway? (y/N) " yn
+		read -rp "Install '$INSTALL_NAME' anyway? (y/N) " yn
 		case "$yn" in
 		[Yy]*) ;;
 		*)
@@ -376,6 +420,25 @@ if command -v "$BASE_NAME" >/dev/null 2>&1; then
 		esac
 	fi
 fi
+
+for a in "${ALIASES[@]}"; do
+	if command -v "$a" >/dev/null 2>&1; then
+		existing_loc=$(command -v "$a")
+		echo "Warning: a command named '$a' exists on PATH at $existing_loc"
+		if [ "$YES" = true ]; then
+			logv "Non-interactive: --yes provided; proceeding despite PATH collision"
+		else
+			read -rp "Install alias '$a' anyway? (y/N) " yn
+			case "$yn" in
+			[Yy]*) ;;
+			*)
+				echo "Aborted"
+				exit 4
+				;;
+			esac
+		fi
+	fi
+done
 
 # ensure TARGET exists and is writable
 if [ ! -d "$TARGET" ]; then
@@ -390,7 +453,7 @@ if [ ! -d "$TARGET" ]; then
 fi
 
 # Copy manifest
-target_manifest="$TARGET/$BASE_NAME.dotslash"
+target_manifest="$TARGET/$INSTALL_NAME.dotslash"
 SKIP_MANIFEST_COPY=false
 if [ -e "$target_manifest" ]; then
 	if [ "$FORCE" = true ]; then
@@ -428,7 +491,7 @@ fi
 
 # Create wrapper unless --no-wrapper
 if [ "$NO_WRAPPER" = false ]; then
-	wrapper="$TARGET/$BASE_NAME"
+	wrapper="$TARGET/$INSTALL_NAME"
 	if [ -e "$wrapper" ]; then
 		if [ "$FORCE" = true ]; then
 			logv "Overwriting existing wrapper: $wrapper"
@@ -460,14 +523,47 @@ if [ "$NO_WRAPPER" = false ]; then
 set -euo pipefail
 DIR="\$(cd "\$(dirname "\${0}")" >/dev/null 2>&1 && pwd)"
 if [ -x "\$DIR/dotslash" ]; then
-  exec "\$DIR/dotslash" "\$DIR/$BASE_NAME.dotslash" "\$@"
+  exec "\$DIR/dotslash" "\$DIR/$INSTALL_NAME.dotslash" "\$@"
 fi
-exec dotslash "\$DIR/$BASE_NAME.dotslash" "\$@"
+exec dotslash "\$DIR/$INSTALL_NAME.dotslash" "\$@"
 EOF
 			chmod 0755 "$wrapper"
 		fi
 	fi
 fi
+
+	# Create alias symlinks pointing at the wrapper
+	for a in "${ALIASES[@]}"; do
+		alias_path="$TARGET/$a"
+		if [ -e "$alias_path" ] || [ -L "$alias_path" ]; then
+			if [ "$FORCE" = true ]; then
+				logv "Overwriting existing alias: $alias_path"
+			else
+				if [ "$YES" = true ]; then
+					logv "Non-interactive: --yes provided; not overwriting existing alias; skipping."
+					continue
+				else
+					read -rp "Target alias exists at $alias_path. Overwrite? (y/N) " yn
+					case "$yn" in
+					[Yy]*) ;;
+					*)
+						echo "Aborted"
+						exit 4
+						;;
+					esac
+				fi
+			fi
+		fi
+
+		if [ "$DRY_RUN" = true ]; then
+			echo "Would create alias symlink: $alias_path -> $INSTALL_NAME"
+		else
+			(
+				cd "$TARGET"
+				ln -sfn "$INSTALL_NAME" "$a"
+			)
+		fi
+	done
 
 # Success message
 echo "Installed \"$CAND_NAME\" to $TARGET"
