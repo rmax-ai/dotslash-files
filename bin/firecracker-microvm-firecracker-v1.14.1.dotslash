@@ -1,0 +1,44 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=firecracker-microvm/firecracker TAG=v1.14.1",
+  "name": "firecracker",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 7662974,
+      "hash": "sha256",
+      "digest": "ea66dc1fbdb2473bbb95a1e822ae7884cd575a891a8f801258723258d36b7c7c",
+      "format": "tar.gz",
+      "path": "release-v1.14.1-x86_64/firecracker-v1.14.1-x86_64",
+      "providers": [
+        {
+          "url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.14.1/firecracker-v1.14.1-x86_64.tgz"
+        },
+        {
+          "type": "github-release",
+          "repo": "firecracker-microvm/firecracker",
+          "tag": "v1.14.1",
+          "name": "firecracker-v1.14.1-x86_64.tgz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 7379757,
+      "hash": "sha256",
+      "digest": "65a39256b9dd741e20c3a3fe5055cb38e5159049b5ede2015604951521000a04",
+      "format": "tar.gz",
+      "path": "release-v1.14.1-aarch64/firecracker-v1.14.1-aarch64",
+      "providers": [
+        {
+          "url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.14.1/firecracker-v1.14.1-aarch64.tgz"
+        },
+        {
+          "type": "github-release",
+          "repo": "firecracker-microvm/firecracker",
+          "tag": "v1.14.1",
+          "name": "firecracker-v1.14.1-aarch64.tgz"
+        }
+      ]
+    }
+  }
+}
