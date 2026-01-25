@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DotSlash Files - Reproducible Tool Distribution</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="hero">
+        <div class="container">
+            <h1>DotSlash Files</h1>
+            <p class="tagline">Wrappers for Reproducible Tooling</p>
+            <p class="description">
+                Small manifests, remote fetching, and security via hashes—all in a single executable wrapper.
+            </p>
+            <a href="https://github.com/dotslash-files" class="btn">View on GitHub</a>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section id="how-it-works">
+            <h2>How DotSlash Works</h2>
+            <p>
+                DotSlash turns executable files into lightweight JSON manifests that fetch the actual binary on demand. 
+                It uses a special shebang line:
+            </p>
+            <pre><code>#!/usr/bin/env dotslash</code></pre>
+            <p>
+                When executed, the DotSlash workflow is simple and secure:
+            </p>
+            <ol class="flow-list">
+                <li><strong>Inspect:</strong> Reads the JSON manifest.</li>
+                <li><strong>Fetch:</strong> Downloads the artifact from the specified URL.</li>
+                <li><strong>Verify:</strong> Checks the sha256 hash to ensure integrity.</li>
+                <li><strong>Cache:</strong> Stores the artifact locally for future runs.</li>
+                <li><strong>Exec:</strong> Runs the binary with arguments forwarded transparently.</li>
+            </ol>
+        </section>
+
+        <section id="repo-overview">
+            <h2>Repository Overview</h2>
+            <p>
+                This repository acts as the central registry and toolkit for DotSlash files.
+            </p>
+            <div class="grid">
+                <div class="card">
+                    <h3>bin/</h3>
+                    <p>Collection of ready-to-use DotSlash manifests.</p>
+                </div>
+                <div class="card">
+                    <h3>scripts/</h3>
+                    <p>Utility scripts, including the installer and doctor tools.</p>
+                </div>
+                <div class="card">
+                    <h3>tests/</h3>
+                    <p>Comprehensive test suites for shims and installers.</p>
+                </div>
+                <div class="card">
+                    <h3>docs/</h3>
+                    <p>Documentation for installers, references, and plans.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="cli-highlights">
+            <h2>CLI Usage Highlights</h2>
+            <p>Common commands for interacting with DotSlash utilities:</p>
+            <ul class="cmd-list">
+                <li><code>dotslash parse</code> - Validate manifest syntax.</li>
+                <li><code>dotslash fetch</code> - Download artifacts without running.</li>
+                <li><code>dotslash run</code> - Execute a manifest explicitly.</li>
+                <li><code>dotslash sha256</code> - Calculate hashes for artifacts.</li>
+            </ul>
+            <div class="highlight-box">
+                <h3>The Installer</h3>
+                <p>
+                    The <code>dotslash-install</code> script handles interactive selection, wrapper creation, and PATH configuration, supporting both CI/CD and manual workflows.
+                </p>
+            </div>
+        </section>
+
+        <section id="installer-proposal">
+            <h2>Installer Features</h2>
+            <p>
+                Designed for flexibility and ease of use, the installer plan includes:
+            </p>
+            <ul>
+                <li><strong>Directory Resolution:</strong> Smart defaults for installation paths.</li>
+                <li><strong>Interactive Selection:</strong> Fuzzy search for available tools.</li>
+                <li><strong>Wrapper Creation:</strong> Automatically generates executable wrappers.</li>
+                <li><strong>PATH Handling:</strong> Updates shell configuration if needed.</li>
+                <li><strong>Robustness:</strong> Comprehensive flags, exit codes, and self-tests.</li>
+            </ul>
+        </section>
+
+        <section id="security">
+            <h2>Security & Best Practices</h2>
+            <p>
+                Security is core to the DotSlash design.
+            </p>
+            <ul>
+                <li><strong>Hash Verification:</strong> Every artifact is verified against a sha256 hash before execution.</li>
+                <li><strong>Immutable Caches:</strong> Fetched binaries are stored securely in a local cache.</li>
+                <li><strong>No Script Execution:</strong> DotSlash executes binaries, not arbitrary scripts, reducing attack surface.</li>
+            </ul>
+        </section>
+
+        <section id="contributing">
+            <h2>Getting Involved</h2>
+            <p>
+                We welcome contributions! Here is how you can help:
+            </p>
+            <ol>
+                <li>Add a new manifest to the <code>bin/</code> directory.</li>
+                <li>Validate it using the <code>dotslash</code> tool.</li>
+                <li>Open a Pull Request.</li>
+            </ol>
+            <p><strong>Running Tests:</strong></p>
+            <pre><code>make shim-tests   # Test the shim wrapper
+make bin-tests    # Test manifest files
+make install-tests # Test the installer script</code></pre>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 DotSlash Files Project</p>
+            <nav>
+                <a href="https://dotslash-cli.com">Official Site</a>
+                <a href="#">Documentation</a>
+                <a href="#">Tests</a>
+                <a href="#">Issue Tracker</a>
+            </nav>
+        </div>
+    </footer>
+
+</body>
+</html>
