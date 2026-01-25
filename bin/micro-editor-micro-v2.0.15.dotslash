@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=micro-editor/micro TAG=v2.0.15",
+  "name": "micro",
+  "platforms": {
+    "linux-x86_64": {
+      "size": 5088851,
+      "hash": "sha256",
+      "digest": "dfa1b6ae53e4e0b063b54224fd2b6b0a3c3159ea09d042a3a8f5cd001844d44c",
+      "format": "tar.gz",
+      "path": "micro-2.0.15/micro",
+      "providers": [
+        {
+          "url": "https://github.com/micro-editor/micro/releases/download/v2.0.15/micro-2.0.15-linux64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "micro-editor/micro",
+          "tag": "v2.0.15",
+          "name": "micro-2.0.15-linux64.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 4680364,
+      "hash": "sha256",
+      "digest": "5ca127857bf5500be3879f1a70b27556e737a49da04a1be5334de9e8e8781ad9",
+      "format": "tar.gz",
+      "path": "micro-2.0.15/micro",
+      "providers": [
+        {
+          "url": "https://github.com/micro-editor/micro/releases/download/v2.0.15/micro-2.0.15-linux-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "micro-editor/micro",
+          "tag": "v2.0.15",
+          "name": "micro-2.0.15-linux-arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 4879518,
+      "hash": "sha256",
+      "digest": "2ff285cc49f2ac3f7a6e9110e2dabd3c848b73eed56a8396d627c0af80a34624",
+      "format": "tar.gz",
+      "path": "micro-2.0.15/micro",
+      "providers": [
+        {
+          "url": "https://github.com/micro-editor/micro/releases/download/v2.0.15/micro-2.0.15-macos-arm64.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "micro-editor/micro",
+          "tag": "v2.0.15",
+          "name": "micro-2.0.15-macos-arm64.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 5195727,
+      "hash": "sha256",
+      "digest": "d765b9bdd6478c4f5a3cbd5a93ebe7bab2b9cec30b5350016975cf1045855cee",
+      "format": "tar.gz",
+      "path": "micro-2.0.15/micro",
+      "providers": [
+        {
+          "url": "https://github.com/micro-editor/micro/releases/download/v2.0.15/micro-2.0.15-osx.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "micro-editor/micro",
+          "tag": "v2.0.15",
+          "name": "micro-2.0.15-osx.tar.gz"
+        }
+      ]
+    }
+  }
+}
