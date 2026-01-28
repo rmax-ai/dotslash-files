@@ -246,8 +246,8 @@ if [ ! -d "$BIN_DIR" ]; then
 fi
 
 # Build candidate list: arrays for names and paths
-declare -a CAND_NAMES
-declare -a CAND_PATHS
+declare -a CAND_NAMES=()
+declare -a CAND_PATHS=()
 
 for f in "$BIN_DIR"/*.dotslash; do
 	[ -e "$f" ] || continue
@@ -284,7 +284,7 @@ for f in "$BIN_DIR"/*.dotslash; do
 done
 
 # Find matches: exact by name (collect all matches to handle duplicate .name values)
-declare -a MATCH_INDICES
+declare -a MATCH_INDICES=()
 for i in "${!CAND_NAMES[@]}"; do
 	if [ "${CAND_NAMES[$i]}" = "$QUERY" ]; then
 		MATCH_INDICES+=($i)
