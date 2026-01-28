@@ -1,0 +1,76 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=pnpm/pnpm TAG=v10.28.2",
+  "name": "pnpm",
+  "platforms": {
+    "linux-aarch64": {
+      "size": 61837987,
+      "hash": "sha256",
+      "digest": "6f265c811d1aef8e817e0017cd700d0d345a1100bd8a90358db64eaab2fbff85",
+      "path": "pnpm-linux-arm64",
+      "providers": [
+        {
+          "url": "https://github.com/pnpm/pnpm/releases/download/v10.28.2/pnpm-linux-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "pnpm/pnpm",
+          "tag": "v10.28.2",
+          "name": "pnpm-linux-arm64"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 65812715,
+      "hash": "sha256",
+      "digest": "9f38396f660cd3b1f71e0b0af0b7ba22dd1fd446dc37840a1b6a025868557390",
+      "path": "pnpm-linux-x64",
+      "providers": [
+        {
+          "url": "https://github.com/pnpm/pnpm/releases/download/v10.28.2/pnpm-linux-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "pnpm/pnpm",
+          "tag": "v10.28.2",
+          "name": "pnpm-linux-x64"
+        }
+      ]
+    },
+    "macos-aarch64": {
+      "size": 62512528,
+      "hash": "sha256",
+      "digest": "38a23bf53d918b5192f71ed58e6df9609da478790f89b20ca5f45c3cd46d1d2c",
+      "path": "pnpm-macos-arm64",
+      "providers": [
+        {
+          "url": "https://github.com/pnpm/pnpm/releases/download/v10.28.2/pnpm-macos-arm64"
+        },
+        {
+          "type": "github-release",
+          "repo": "pnpm/pnpm",
+          "tag": "v10.28.2",
+          "name": "pnpm-macos-arm64"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 69870272,
+      "hash": "sha256",
+      "digest": "2b86ff518aa100701aecb1b37b84e9ba2aaf0b7c1803dcc9b3a0f7d0681bd27d",
+      "path": "pnpm-macos-x64",
+      "providers": [
+        {
+          "url": "https://github.com/pnpm/pnpm/releases/download/v10.28.2/pnpm-macos-x64"
+        },
+        {
+          "type": "github-release",
+          "repo": "pnpm/pnpm",
+          "tag": "v10.28.2",
+          "name": "pnpm-macos-x64"
+        }
+      ]
+    }
+  }
+}
