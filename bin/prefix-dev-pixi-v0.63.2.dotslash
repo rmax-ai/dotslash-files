@@ -1,0 +1,80 @@
+#!/usr/bin/env dotslash
+
+{
+  "_generated_by": "dotslash-gen REPO=prefix-dev/pixi TAG=v0.63.2",
+  "name": "pixi",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 23843831,
+      "hash": "sha256",
+      "digest": "28fca5e7335b5f6b5b05acb9f83b61fa65e27e5dd69fe7a1750aa884ea4163cb",
+      "format": "tar.gz",
+      "path": "pixi",
+      "providers": [
+        {
+          "url": "https://github.com/prefix-dev/pixi/releases/download/v0.63.2/pixi-aarch64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "prefix-dev/pixi",
+          "tag": "v0.63.2",
+          "name": "pixi-aarch64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 25635593,
+      "hash": "sha256",
+      "digest": "85ea41d0310acd8e13edf4923b65c101fc3fc5f8d2ee48d85d64f2bcd9781830",
+      "format": "tar.gz",
+      "path": "pixi",
+      "providers": [
+        {
+          "url": "https://github.com/prefix-dev/pixi/releases/download/v0.63.2/pixi-x86_64-apple-darwin.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "prefix-dev/pixi",
+          "tag": "v0.63.2",
+          "name": "pixi-x86_64-apple-darwin.tar.gz"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 26856312,
+      "hash": "sha256",
+      "digest": "dbde6dbc2806602171e17305ce005e1aed519f2f2461a7cafd0093e92b7e7681",
+      "format": "tar.gz",
+      "path": "pixi",
+      "providers": [
+        {
+          "url": "https://github.com/prefix-dev/pixi/releases/download/v0.63.2/pixi-aarch64-unknown-linux-musl.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "prefix-dev/pixi",
+          "tag": "v0.63.2",
+          "name": "pixi-aarch64-unknown-linux-musl.tar.gz"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 28235932,
+      "hash": "sha256",
+      "digest": "b2a9e26bb6c80fe00618a02e7198dec222e1fbcec61e04c11b6e6538089ab100",
+      "format": "tar.gz",
+      "path": "pixi",
+      "providers": [
+        {
+          "url": "https://github.com/prefix-dev/pixi/releases/download/v0.63.2/pixi-x86_64-unknown-linux-musl.tar.gz"
+        },
+        {
+          "type": "github-release",
+          "repo": "prefix-dev/pixi",
+          "tag": "v0.63.2",
+          "name": "pixi-x86_64-unknown-linux-musl.tar.gz"
+        }
+      ]
+    }
+  }
+}
